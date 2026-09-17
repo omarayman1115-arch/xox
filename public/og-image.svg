@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#172554"/>
+      <stop offset="1" stop-color="#1e3a8a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1050" cy="80" r="220" fill="#f59e0b" opacity="0.15"/>
+  <circle cx="120" cy="560" r="180" fill="#ffffff" opacity="0.06"/>
+  <g transform="translate(600,250)" text-anchor="middle">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="140" font-weight="800" fill="#ffffff" letter-spacing="8">xox</text>
+  </g>
+  <g transform="translate(600,360)" text-anchor="middle">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="44" font-weight="700" fill="#f59e0b">عقارك اللي بتحلم بيه موجود هنا</text>
+  </g>
+  <g transform="translate(600,430)" text-anchor="middle">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="28" fill="#cbd5e1">شقق • فيلات • محلات • شاليهات — لكل مصر</text>
+  </g>
+  <g transform="translate(600,540)" text-anchor="middle">
+    <rect x="-140" y="-30" width="280" height="60" rx="14" fill="#1e3a8a" stroke="#ffffff" stroke-opacity="0.3"/>
+    <text x="0" y="10" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#ffffff">تصفح العقارات</text>
+  </g>
+</svg>

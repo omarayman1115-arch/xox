@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  --royal: #1e3a8a;
+  --royal-dark: #172554;
+  --gold: #f59e0b;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-cairo), system-ui, -apple-system, sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+/* شريط تمرير أفقي بدون مؤشر (للفلاتر على الموبايل) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ظهور ناعم خفيف للكروت */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-up {
+  animation: fadeUp 0.35s ease both;
+}
+
+/* حركة درج الفلتر على الموبايل */
+@keyframes slideUpSheet {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.slide-up-sheet {
+  animation: slideUpSheet 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* تكبير بسيط للصور عند مرور الماوس */
+.card-img {
+  transition: transform 0.35s ease;
+}
+.group:hover .card-img {
+  transform: scale(1.05);
+}
