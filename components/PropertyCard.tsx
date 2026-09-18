@@ -10,9 +10,11 @@ import { formatPrice, coverImage } from "@/lib/format";
 interface CardProps {
   property: Property;
   onOpen?: (p: Property) => void;
+  /** الصور الأولى اللي فوق — بتتحمل بأولوية عشان سرعة الظهور */
+  priority?: boolean;
 }
 
-export default function PropertyCard({ property, onOpen }: CardProps) {
+export default function PropertyCard({ property, onOpen, priority = false }: CardProps) {
   const { t, lang } = useLang();
   const { isFavorite, toggle, hydrated } = useFav();
   const fav = hydrated && isFavorite(property.id);
@@ -50,6 +52,7 @@ export default function PropertyCard({ property, onOpen }: CardProps) {
               src={coverImage(property)}
               alt={property.title}
               fill
+              priority={priority}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover card-img"
             />

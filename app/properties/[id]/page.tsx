@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -39,8 +41,55 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PropertyDirectPage({ params }: Props) {
   const { id } = await params;
-  const exists = await fetchPropertyById(id);
-  if (!exists) notFound();
+  const p = await fetchPropertyById(id);
+  if (!p) notFound();
 
-  return <HomeView />;
+  const siteOrigin = siteUrl.replace(/\/$/, "");
+  const priceValid = Number.isFinite(p.price) && p.price > 0;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    "@id": `${siteOrigin}/properties/${p.id}`,
+    name: p.title,
+    url: `${siteOrigin}/properties/${p.id}`,
+    description:
+      `${p.property_type} ${p.area}م في ${p.city} ${p.governorate} — ${p.bedrooms} غرف، ${p.bathrooms} حمامات. ${p.description}`.slice(
+        0,
+        5000
+      ),
+    datePosted: p.created_at,
+    image: p.images?.length ? p.images : undefined,
+    ...(priceValid
+      ? {
+          offers: {
+            "@type": "Offer",
+            price: p.price,
+            priceCurrency: "EGP",
+            availability: "https://schema.org/InStock",
+            url: `${siteOrigin}/properties/${p.id}`,
+          },
+        }
+      : {}),
+    numberOfRooms: p.bedrooms || undefined,
+    numberOfBathroomsTotal: p.bathrooms || undefined,
+    floorSize: p.area
+      ? { "@type": "QuantitativeValue", value: p.area, unitCode: "MTK" }
+      : undefined,
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: p.city || p.governorate,
+      addressRegion: p.governorate,
+      addressCountry: "EG",
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <HomeView />
+    </>
+  );
 }

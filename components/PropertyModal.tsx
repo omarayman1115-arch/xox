@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { X, Heart, BedDouble, Bath, Ruler, MapPin, Check } from "lucide-react";
+import { X, Heart, BedDouble, Bath, Ruler, MapPin, Check, MessageCircle, Phone, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Property } from "@/lib/types";
 import { useLang } from "@/lib/i18n";
 import { useFav } from "./FavoritesProvider";
 import { formatPrice, formatDate, whatsappLink, safeImages } from "@/lib/format";
+import LeadModal from "./LeadModal";
 
 interface Props {
   property: Property;
@@ -19,17 +20,41 @@ export default function PropertyModal({ property: p, onClose }: Props) {
   const fav = hydrated && isFavorite(p.id);
   const images = safeImages(p);
 
-  // قفل سكرول الصفحة وإغلاق بـ Escape
+  // فورم التقاط بيانات العميل قبل واتساب — يقدر يتقفل بمتغير البيئة NEXT_PUBLIC_LEAD_FORM=off
+  const showLeadForm = process.env.NEXT_PUBLIC_LEAD_FORM !== "off";
+  const [leadOpen, setLeadOpen] = useState(false);
+
+  // المعرض: الصورة المعروضة — بتترجع للأولى لما يتغير العقار
+  const [imgIdx, setImgIdx] = useState(0);
+  useEffect(() => setImgIdx(0), [p.id]);
+
+  // التنقل بالأسهم — بيقف عند الأول والآخر (من غير لف حوالين)
+  const nextImg = () => setImgIdx((i) => Math.min(i + 1, images.length - 1));
+  const prevImg = () => setImgIdx((i) => Math.max(i - 1, 0));
+
+  // قفل سكرول الصفحة وإغلاق بـ Escape + تنقل بالأسهم
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (images.length > 1) {
+        // الكيبورد يتبع اتجاه الصفحة: عربي (شمال = التالية) وإنجليزي (يمين = التالية)
+        if (lang === "ar") {
+          if (e.key === "ArrowLeft") nextImg();
+          if (e.key === "ArrowRight") prevImg();
+        } else {
+          if (e.key === "ArrowRight") nextImg();
+          if (e.key === "ArrowLeft") prevImg();
+        }
+      }
+    };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
-  }, [onClose]);
+  }, [onClose, images.length]);
 
   const locationParts = [p.district, p.city, p.governorate].filter(Boolean);
   const locationText = lang === "en" ? locationParts.join(", ") : locationParts.join(" - ");
@@ -44,6 +69,9 @@ export default function PropertyModal({ property: p, onClose }: Props) {
       : "";
 
   const isNew = Date.now() - new Date(p.created_at).getTime() < 3 * 86400000;
+
+  const phone = p.contact_phone || "01151707244";
+  const wa = whatsappLink(phone, p);
 
   return (
     <div
@@ -98,24 +126,63 @@ export default function PropertyModal({ property: p, onClose }: Props) {
 
         {/* المحتوى */}
         <div className="flex-1 overflow-y-auto">
-          {/* صورة كبيرة */}
+          {/* صورة كبيرة — بتتغير لما تدوس على صورة من المصغرات */}
           <div className="relative aspect-[16/10] bg-slate-100">
             <Image
-              src={images[0]}
-              alt={p.title}
+              key={images[imgIdx]}
+              src={images[imgIdx]}
+              alt={`${p.title} — صورة ${imgIdx + 1}`}
               fill
               sizes="(max-width: 640px) 100vw, 672px"
               className="object-cover"
+              priority
             />
+            {/* عدّاد الصور — dir=ltr عشان رقم الصورة يفضل على الشمال مش يتقلب مع RTL */}
+            {images.length > 1 && (
+              <span dir="ltr" className="absolute bottom-3 end-3 px-2.5 py-1 rounded-lg bg-black/60 text-white text-xs font-bold backdrop-blur">
+                {imgIdx + 1} / {images.length}
+              </span>
+            )}
+            {/* أسهم التنقل — بتتقلب مع اتجاه الصفحة، وبتختفي عند أول/آخر صورة */}
+            {images.length > 1 && imgIdx < images.length - 1 && (
+              <button
+                type="button"
+                onClick={nextImg}
+                aria-label={lang === "ar" ? "الصورة التالية" : "Next image"}
+                className="absolute top-1/2 -translate-y-1/2 end-3 w-9 h-9 rounded-full bg-white/85 hover:bg-white text-slate-700 shadow-md backdrop-blur flex items-center justify-center active:scale-95 transition-all"
+              >
+                {lang === "ar" ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+              </button>
+            )}
+            {images.length > 1 && imgIdx > 0 && (
+              <button
+                type="button"
+                onClick={prevImg}
+                aria-label={lang === "ar" ? "الصورة السابقة" : "Previous image"}
+                className="absolute top-1/2 -translate-y-1/2 start-3 w-9 h-9 rounded-full bg-white/85 hover:bg-white text-slate-700 shadow-md backdrop-blur flex items-center justify-center active:scale-95 transition-all"
+              >
+                {lang === "ar" ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+              </button>
+            )}
           </div>
 
-          {/* باقي الصور */}
+          {/* المصغرات — كلها قابلة للضغط والصورة المختارة عليها إطار */}
           {images.length > 1 && (
             <div className="flex gap-2 px-4 pt-3 overflow-x-auto no-scrollbar">
-              {images.slice(1, 6).map((img, i) => (
-                <div key={i} className="relative w-20 h-16 rounded-xl overflow-hidden shrink-0">
+              {images.map((img, i) => (
+                <button
+                  key={img + i}
+                  type="button"
+                  onClick={() => setImgIdx(i)}
+                  aria-label={`عرض الصورة ${i + 1}`}
+                  className={`relative w-20 h-16 rounded-xl overflow-hidden shrink-0 transition-all ${
+                    i === imgIdx
+                      ? "ring-2 ring-[#1e3a8a] ring-offset-2 ring-offset-white"
+                      : "opacity-70 hover:opacity-100"
+                  }`}
+                >
                   <Image src={img} alt="" fill sizes="80px" className="object-cover" />
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -193,22 +260,36 @@ export default function PropertyModal({ property: p, onClose }: Props) {
 
         {/* أزرار التواصل الثابتة */}
         <div className="shrink-0 border-t border-slate-100 p-3 flex gap-2 bg-white">
+          {showLeadForm ? (
+            <button
+              onClick={() => setLeadOpen(true)}
+              className="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-center text-sm active:scale-95 transition-transform"
+            >
+              💬 {t("whatsapp")}
+            </button>
+          ) : (
+            <a
+              href={wa}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-center text-sm active:scale-95 transition-transform"
+            >
+              💬 {t("whatsapp")}
+            </a>
+          )}
           <a
-            href={whatsappLink(p.contact_phone || "01151707244", p)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-center text-sm active:scale-95 transition-transform"
-          >
-            💬 {t("whatsapp")}
-          </a>
-          <a
-            href={`tel:${p.contact_phone || "01151707244"}`}
+            href={`tel:${phone}`}
             className="flex-1 py-3 rounded-xl bg-[#1e3a8a] hover:bg-[#172554] text-white font-bold text-center text-sm active:scale-95 transition-transform"
           >
             📞 {t("callNow")}
           </a>
         </div>
       </div>
+
+      {/* فورم التقاط العميل قبل واتساب */}
+      {leadOpen && (
+        <LeadModal property={p} waUrl={wa} onClose={() => setLeadOpen(false)} />
+      )}
     </div>
   );
 }

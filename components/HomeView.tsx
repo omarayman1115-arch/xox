@@ -22,7 +22,7 @@ export default function HomeView() {
 
 function HomeInner() {
   const { t } = useLang();
-  const { properties, loading } = useProperties();
+  const { properties, loading, error, refetch } = useProperties();
   const params = useSearchParams();
   const showFavs = params.get("fav") === "1";
 
@@ -137,6 +137,17 @@ function HomeInner() {
                   <div key={i} className="bg-white rounded-2xl border border-slate-100 h-72 animate-pulse" />
                 ))}
               </div>
+            ) : error ? (
+              <div className="text-center py-16 bg-white rounded-2xl border border-rose-100">
+                <p className="text-4xl mb-3">📡</p>
+                <h3 className="text-lg font-extrabold text-slate-700">{t("loadFailed")}</h3>
+                <button
+                  onClick={refetch}
+                  className="mt-4 px-6 py-2.5 rounded-xl bg-[#1e3a8a] text-white font-bold text-sm hover:bg-[#172554] transition-colors"
+                >
+                  {t("retry")}
+                </button>
+              </div>
             ) : results.length === 0 ? (
               <div className="text-center py-20">
                 <p className="text-5xl mb-3">🔍</p>
@@ -145,8 +156,8 @@ function HomeInner() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {results.map((p) => (
-                  <PropertyCard key={p.id} property={p} onOpen={setSelected} />
+                {results.map((p, i) => (
+                  <PropertyCard key={p.id} property={p} onOpen={setSelected} priority={i < 3} />
                 ))}
               </div>
             )}

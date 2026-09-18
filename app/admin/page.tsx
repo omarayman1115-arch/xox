@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Lock,
   Plus,
@@ -15,7 +16,9 @@ import {
 import { useLang } from "@/lib/i18n";
 import type { Property } from "@/lib/types";
 import { formatPrice, coverImage } from "@/lib/format";
+import { adminFetch, applyAdminSession } from "@/lib/adminFetch";
 import PropertyForm from "@/components/admin/PropertyForm";
+import { Users } from "lucide-react";
 
 export default function AdminPage() {
   const { t, lang } = useLang();
@@ -27,9 +30,14 @@ export default function AdminPage() {
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/admin/properties");
+    const res = await adminFetch("/api/admin/properties");
     if (res.status === 401) {
       setAuthed(false);
+      return;
+    }
+    if (!res.ok) {
+      setAuthed(false);
+      setError(t("loadFailed"));
       return;
     }
     setAuthed(true);
@@ -49,6 +57,9 @@ export default function AdminPage() {
       body: JSON.stringify({ password: pwd }),
     });
     if (res.ok) {
+      // طبّق جلسة Supabase لو السيرفر رجّعها — عشان الـ Bearer في كل النداءات الجاية
+      const data = await res.json().catch(() => ({}));
+      if (data.session) await applyAdminSession(data.session);
       setPwd("");
       load();
     } else {
@@ -57,6 +68,8 @@ export default function AdminPage() {
   }
 
   async function logout() {
+    const { getSupabase } = await import("@/lib/supabase");
+    await getSupabase()?.auth.signOut();
     await fetch("/api/admin/login", { method: "DELETE" });
     setAuthed(false);
   }
@@ -138,6 +151,13 @@ export default function AdminPage() {
           <span className="text-sm font-bold text-slate-400">({items.length})</span>
         </h1>
         <div className="flex items-center gap-2">
+          <Link
+            href="/admin/leads"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-sm hover:bg-emerald-100 transition-colors"
+          >
+            <Users size={17} />
+            {t("leads")}
+          </Link>
           <button
             onClick={() => setEditing("new")}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1e3a8a] text-white font-bold text-sm hover:bg-[#172554] transition-colors active:scale-95"

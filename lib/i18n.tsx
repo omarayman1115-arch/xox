@@ -129,6 +129,16 @@ const translations = {
     all: "الكل",
     sale: "بيع",
     rent: "إيجار",
+    // لوحة الليدز والعملاء
+    leads: "العملاء المهتمين",
+    leadsHint: "أي حد يسأل عن عقار هيظهر هنا",
+    leadModalTitle: "قبل ما نحوّلك على واتساب",
+    leadYourName: "اسمك",
+    leadYourPhone: "رقم موبايلك",
+    leadPrivacy: "رقمك هيوصلنا على طول عشان نكلمك بسرعة — مش هنستخدمه في أي حاجة تانية",
+    leadContinueWhatsapp: "كمّل على واتساب",
+    loadFailed: "حصلت مشكلة في تحميل البيانات — اتأكد من النت وقولي تاني",
+    retry: "حاول تاني",
   },
   en: {
     appName: "xox",
@@ -253,6 +263,15 @@ const translations = {
     all: "All",
     sale: "Sale",
     rent: "Rent",
+    leads: "Interested Clients",
+    leadsHint: "Anyone asking about a property will appear here",
+    leadModalTitle: "Before we take you to WhatsApp",
+    leadYourName: "Your name",
+    leadYourPhone: "Your phone number",
+    leadPrivacy: "Your number reaches us instantly so we can call you quickly — nothing else is used for",
+    leadContinueWhatsapp: "Continue to WhatsApp",
+    loadFailed: "Failed to load data — check your connection and try again",
+    retry: "Retry",
   },
 } as const;
 

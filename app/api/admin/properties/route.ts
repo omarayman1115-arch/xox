@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/auth";
-import { getSupabaseAdmin, isServerAdminConfigured } from "@/lib/supabaseAdmin";
+import { requireAdmin } from "@/lib/serverAdminAuth";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { PROPERTIES_TABLE } from "@/lib/supabase";
 import type { Property } from "@/lib/types";
 import {
@@ -16,8 +16,8 @@ function unauthorized() {
 }
 
 /* ---------- القائمة ---------- */
-export async function GET() {
-  if (!(await isAdmin())) return unauthorized();
+export async function GET(req: Request) {
+  if (!(await requireAdmin(req))) return unauthorized();
 
   const supabase = getSupabaseAdmin();
   if (supabase) {
@@ -33,7 +33,7 @@ export async function GET() {
 
 /* ---------- الإضافة ---------- */
 export async function POST(req: Request) {
-  if (!(await isAdmin())) return unauthorized();
+  if (!(await requireAdmin(req))) return unauthorized();
 
   const body = (await req.json()) as Partial<Property>;
   const now = new Date().toISOString();
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
 
 /* ---------- التعديل ---------- */
 export async function PATCH(req: Request) {
-  if (!(await isAdmin())) return unauthorized();
+  if (!(await requireAdmin(req))) return unauthorized();
 
   const body = (await req.json()) as Partial<Property> & { id?: string };
   if (!body.id) return NextResponse.json({ error: "missing_id" }, { status: 400 });
@@ -104,7 +104,7 @@ export async function PATCH(req: Request) {
 
 /* ---------- الحذف ---------- */
 export async function DELETE(req: Request) {
-  if (!(await isAdmin())) return unauthorized();
+  if (!(await requireAdmin(req))) return unauthorized();
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");

@@ -94,8 +94,8 @@ export default function FilterBar({ filters, onChange, resultCount }: Props) {
           <div
             className={
               block
-                ? "mt-2 rounded-xl border border-slate-200 bg-white shadow-sm p-1.5 max-h-72 overflow-y-auto"
-                : "absolute top-full mt-2 start-0 z-50 min-w-52 rounded-xl border border-slate-200 bg-white shadow-xl p-1.5 max-h-80 overflow-y-auto"
+                ? "mt-2 rounded-xl border border-slate-200 bg-white shadow-sm p-1.5 max-h-72 overflow-y-auto thin-scrollbar"
+                : "absolute top-full mt-2 start-0 z-50 min-w-52 rounded-xl border border-slate-200 bg-white shadow-xl p-1.5 max-h-80 overflow-y-auto thin-scrollbar"
             }
           >
             {children}
@@ -459,7 +459,8 @@ export default function FilterBar({ filters, onChange, resultCount }: Props) {
     <div ref={barRef}>
       {/* ===== الديسكتوب: شريط أفقي ===== */}
       <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-sm p-3">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+        {/* flex-wrap بدل overflow-x-auto — لأن القص البيقص أي قايمة منسدلة تنزل تحت الشريط */}
+        <div className="flex items-center gap-2 flex-wrap">
           {tabs}
           {governorateFilter()}
           {cityFilter()}
@@ -518,7 +519,7 @@ export default function FilterBar({ filters, onChange, resultCount }: Props) {
             </div>
 
             {/* الفلاتر */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 thin-scrollbar">
               {governorateFilter(true)}
               {cityFilter(true)}
               {districtFilter(true)}

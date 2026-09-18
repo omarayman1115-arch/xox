@@ -42,18 +42,22 @@ export function applyFilters(list: Property[], f: Filters): Property[] {
 export function useProperties() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const refetch = useCallback(async () => {
     setLoading(true);
+    setError(false);
     const supabase = getSupabase();
     if (supabase) {
-      const { data, error } = await supabase
+      const { data, error: dbError } = await supabase
         .from(PROPERTIES_TABLE)
         .select("*")
         .order("created_at", { ascending: false });
-      if (!error && data) {
+      if (!dbError && data) {
         setProperties(data as Property[]);
       } else {
+        // فشل الاتصال بقاعدة البيانات — نعرض رسالة عربية بدل صفحة فاضية
+        setError(true);
         setProperties([]);
       }
     } else {
@@ -68,7 +72,7 @@ export function useProperties() {
     refetch();
   }, [refetch]);
 
-  return { properties, loading, refetch };
+  return { properties, loading, error, refetch };
 }
 
 export { emptyFilters };

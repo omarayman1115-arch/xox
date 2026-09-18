@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/auth";
+import { requireAdmin } from "@/lib/serverAdminAuth";
 import { getSupabaseAdmin, isServerAdminConfigured } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  if (!(await isAdmin())) {
+  if (!(await requireAdmin(req))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

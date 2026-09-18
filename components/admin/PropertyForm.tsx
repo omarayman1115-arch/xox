@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { X, UploadCloud, Star, ArrowLeft, Loader2 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
+import Select from "@/components/ui/Select";
 import type { Property, ListingType, RentPeriod } from "@/lib/types";
 import { GOVERNORATES, getCities, getDistricts, PROPERTY_TYPES, FEATURES } from "@/lib/egypt";
 
@@ -159,15 +160,14 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
           {form.listing_type === "rent" && (
             <div>
               <label className={labelCls}>{t("rentPeriod")}</label>
-              <select
+              <Select
                 value={form.rent_period}
                 onChange={(e) => set({ rent_period: e.target.value as RentPeriod })}
-                className={inputCls}
               >
                 <option value="monthly">{t("monthly")}</option>
                 <option value="yearly">{t("yearly")}</option>
                 <option value="daily">{t("daily")}</option>
-              </select>
+              </Select>
             </div>
           )}
         </div>
@@ -176,17 +176,16 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelCls}>{t("propertyType")}</label>
-            <select
+            <Select
               value={form.property_type}
               onChange={(e) => set({ property_type: e.target.value })}
-              className={inputCls}
             >
               {PROPERTY_TYPES.map((pt) => (
                 <option key={pt} value={pt}>
                   {pt}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
             <label className={labelCls}>
@@ -208,24 +207,22 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className={labelCls}>{t("governorateLabel")}</label>
-            <select
+            <Select
               value={form.governorate}
               onChange={(e) => set({ governorate: e.target.value, city: "", district: "" })}
-              className={inputCls}
             >
               {GOVERNORATES.map((g) => (
                 <option key={g} value={g}>
                   {g}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
             <label className={labelCls}>{t("cityLabel")}</label>
-            <select
+            <Select
               value={form.city}
               onChange={(e) => set({ city: e.target.value, district: "" })}
-              className={inputCls}
             >
               <option value="">—</option>
               {getCities(form.governorate).map((c) => (
@@ -233,14 +230,13 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
                   {c}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
             <label className={labelCls}>{t("districtLabel")}</label>
-            <select
+            <Select
               value={form.district}
               onChange={(e) => set({ district: e.target.value })}
-              className={inputCls}
             >
               <option value="">—</option>
               {getDistricts(form.governorate, form.city).map((d) => (
@@ -248,7 +244,7 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
                   {d}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
 
