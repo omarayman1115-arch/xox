@@ -11,6 +11,7 @@ import {
   Trash2,
   Building2,
   RefreshCw,
+  StickyNote,
 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { adminFetch } from "@/lib/adminFetch";
@@ -22,6 +23,7 @@ interface Lead {
   customer_name: string;
   phone_number: string;
   status: "contacted" | "not_contacted";
+  note?: string;
   created_at: string;
 }
 
@@ -81,6 +83,26 @@ export default function LeadsPage() {
       // رجّع الحالة القديمة لو فشل الحفظ
       setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, status: lead.status } : l)));
       setError("التحديث ما اتحفظش — جرب تاني");
+    }
+  }
+
+  /** حفظ ملاحظة العميل */
+  async function saveNote(lead: Lead, note: string) {
+    const prev = lead.note ?? "";
+    setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, note } : l)));
+    const res = await adminFetch("/api/admin/leads", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: lead.id, note }),
+    });
+    if (!res.ok) {
+      let hint = "الملاحظة ما اتحفظتش — جرب تاني";
+      try {
+        const j = await res.json();
+        if (j?.error === "note_column_missing") hint = "نفّذ supabase/leads-note.sql في SQL Editor الأول";
+      } catch {}
+      setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, note: prev } : l)));
+      setError(hint);
     }
   }
 
@@ -250,17 +272,23 @@ export default function LeadsPage() {
                     </td>
                     <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{fmtDate(l.created_at)}</td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => toggleStatus(l)}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${
-                          l.status === "contacted"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-amber-50 text-amber-700"
-                        }`}
-                      >
-                        {l.status === "contacted" ? <Check size={13} /> : <Clock size={13} />}
-                        {l.status === "contacted" ? "تم التواصل" : "لم يتم التواصل"}
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => toggleStatus(l)}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${
+                            l.status === "contacted"
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-amber-50 text-amber-700"
+                          }`}
+                        >
+                          {l.status === "contacted" ? <Check size={13} /> : <Clock size={13} />}
+                          {l.status === "contacted" ? "تم التواصل" : "لم يتم التواصل"}
+                        </button>
+                        <NoteButton lead={l} onSave={(n) => saveNote(l, n)} />
+                      </div>
+                      {l.note && (
+                        <p className="text-xs text-slate-500 mt-1.5 max-w-72 whitespace-pre-line">📝 {l.note}</p>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 justify-end">
@@ -303,18 +331,24 @@ export default function LeadsPage() {
                       {l.phone_number}
                     </a>
                   </div>
-                  <button
-                    onClick={() => toggleStatus(l)}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold shrink-0 ${
-                      l.status === "contacted"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-amber-50 text-amber-700"
-                    }`}
-                  >
-                    {l.status === "contacted" ? <Check size={13} /> : <Clock size={13} />}
-                    {l.status === "contacted" ? "تم التواصل" : "لم يتم"}
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => toggleStatus(l)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold shrink-0 ${
+                        l.status === "contacted"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-amber-50 text-amber-700"
+                      }`}
+                    >
+                      {l.status === "contacted" ? <Check size={13} /> : <Clock size={13} />}
+                      {l.status === "contacted" ? "تم التواصل" : "لم يتم"}
+                    </button>
+                    <NoteButton lead={l} onSave={(n) => saveNote(l, n)} />
+                  </div>
                 </div>
+                {l.note && (
+                  <p className="text-xs text-slate-500 mt-2 whitespace-pre-line">📝 {l.note}</p>
+                )}
                 <p className="text-xs text-slate-400 mt-2">{fmtDate(l.created_at)}</p>
                 <div className="flex gap-2 mt-3">
                   <a
@@ -345,6 +379,59 @@ export default function LeadsPage() {
             ))}
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+/** زرار الملاحظة — بيفتح بوكس صغير للكتابة والحفظ */
+function NoteButton({ lead, onSave }: { lead: Lead; onSave: (note: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [val, setVal] = useState(lead.note ?? "");
+  const hasNote = !!lead.note;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => {
+          setVal(lead.note ?? "");
+          setOpen(!open);
+        }}
+        title="ملاحظة"
+        className={`p-2 rounded-lg ${
+          hasNote ? "text-amber-600 bg-amber-50" : "text-slate-400 hover:bg-slate-100"
+        }`}
+      >
+        <StickyNote size={14} />
+      </button>
+      {open && (
+        <div className="absolute z-30 top-full mt-1 end-0 w-72 bg-white rounded-xl border border-slate-200 shadow-xl p-3">
+          <textarea
+            value={val}
+            onChange={(e) => setVal(e.target.value)}
+            placeholder="تفاصيل المكالمة... مثال: اتفقنا على 4 مليون — بيرد السبت"
+            rows={3}
+            autoFocus
+            className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30 focus:border-[#1e3a8a]"
+          />
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => {
+                onSave(val.trim());
+                setOpen(false);
+              }}
+              className="flex-1 py-2 rounded-lg bg-[#1e3a8a] text-white text-xs font-bold hover:bg-[#172554]"
+            >
+              حفظ
+            </button>
+            <button
+              onClick={() => setOpen(false)}
+              className="px-3 py-2 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold"
+            >
+              إلغاء
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

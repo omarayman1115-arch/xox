@@ -8,7 +8,8 @@ function unauthorized() {
   return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 }
 
-/** كل الليدز — للأدمن فقط، من الأحدث للأقدم */
+/** كل الليدز — للأدمن فقط، من الأحدث للأقدم
+ *  العمود note اختياري: لو لسه متضفش في قاعدة البيانات (supabase/leads-note.sql) نرجّعه فاضي بدل ما نضرب */
 export async function GET(req: Request) {
   if (!(await requireAdmin(req))) return unauthorized();
 
@@ -20,21 +21,44 @@ export async function GET(req: Request) {
     );
   }
 
-  const { data, error } = await supabase
-    .from("leads")
-    .select("id, property_id, customer_name, phone_number, status, created_at")
-    .order("created_at", { ascending: false });
+  let rows: Record<string, unknown>[] | null = null;
+  let selectError: { message: string } | null = null;
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data ?? []);
+  // الأول نجرب مع note — لو العمود مش موجود نجرب من غيره
+  {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("id, property_id, customer_name, phone_number, status, note, created_at")
+      .order("created_at", { ascending: false });
+    rows = data;
+    selectError = error;
+  }
+  if (selectError && /note/i.test(selectError.message)) {
+    const { data, error } = await supabase
+      .from("leads")
+      .select("id, property_id, customer_name, phone_number, status, created_at")
+      .order("created_at", { ascending: false });
+    rows = data;
+    selectError = error;
+  }
+
+  if (selectError) return NextResponse.json({ error: selectError.message }, { status: 500 });
+  const safe = (rows ?? []).map((r) => ({ ...r, note: r.note ?? "" }));
+  return NextResponse.json(safe);
 }
 
-/** تغيير حالة الليد: contacted / not_contacted */
+/** تحديث الليد: الحالة (contacted / not_contacted) أو الملاحظة (note) أو الاتنين */
 export async function PATCH(req: Request) {
   if (!(await requireAdmin(req))) return unauthorized();
 
-  const body = (await req.json()) as { id?: string; status?: string };
-  if (!body.id || (body.status !== "contacted" && body.status !== "not_contacted")) {
+  const body = (await req.json()) as { id?: string; status?: string; note?: string };
+  if (!body.id) {
+    return NextResponse.json({ error: "bad_request" }, { status: 400 });
+  }
+
+  const validStatus = body.status === "contacted" || body.status === "not_contacted";
+  const note = typeof body.note === "string" ? body.note.slice(0, 2000) : undefined;
+  if (!validStatus && note === undefined) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
@@ -43,13 +67,24 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "supabase_missing" }, { status: 503 });
   }
 
+  const patch: { status?: string; note?: string } = {};
+  if (validStatus) patch.status = body.status;
+  if (note !== undefined) patch.note = note;
+
   const { data, error } = await supabase
     .from("leads")
-    .update({ status: body.status })
+    .update(patch)
     .eq("id", body.id)
     .select()
     .single();
 
+  // العمود note لسه مش متضف في قاعدة البيانات — نفّذ supabase/leads-note.sql
+  if (error && /note/i.test(error.message)) {
+    return NextResponse.json(
+      { error: "note_column_missing", hint: "نفّذ supabase/leads-note.sql في SQL Editor" },
+      { status: 503 }
+    );
+  }
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
