@@ -42,7 +42,7 @@ npm run dev
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 ADMIN_PASSWORD=كلمة_سر_قوية_هنا
-NEXT_PUBLIC_DEFAULT_WHATSAPP=201151707244
+NEXT_PUBLIC_DEFAULT_WHATSAPP=201556956343
 ```
 
 وبعدين أعد تشغيل `npm run dev`.
@@ -82,7 +82,7 @@ git push -u origin main
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | من Supabase |
 | `ADMIN_PASSWORD` | كلمة سر قوية |
 | `NEXT_PUBLIC_SITE_URL` | رابط موقعك (مثلاً `https://xox.vercel.app`) |
-| `NEXT_PUBLIC_DEFAULT_WHATSAPP` | `201151707244` |
+| `NEXT_PUBLIC_DEFAULT_WHATSAPP` | `201556956343` |
 
 3. دوس **Deploy** وخلصنا 🎉
 

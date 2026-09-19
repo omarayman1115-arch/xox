@@ -37,7 +37,7 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
     bathrooms: initial?.bathrooms?.toString() ?? "1",
     features: initial?.features ?? ([] as string[]),
     images: initial?.images ?? ([] as string[]),
-    contact_phone: initial?.contact_phone ?? "01151707244",
+    contact_phone: initial?.contact_phone ?? "01556956343",
     is_featured: initial?.is_featured ?? false,
     is_published: initial?.is_published ?? true,
   });

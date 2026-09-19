@@ -18,7 +18,7 @@ export function formatDate(iso: string, lang: "ar" | "en"): string {
   }
 }
 
-/** رقم الهاتف بصيغة دولية للواتساب: 01151707244 → 201151707244 */
+/** رقم الهاتف بصيغة دولية للواتساب: 01556956343 → 201556956343 */
 export function toWhatsAppNumber(phone: string): string {
   let p = phone.replace(/[^\d]/g, "");
   if (p.startsWith("0")) p = "20" + p.slice(1);

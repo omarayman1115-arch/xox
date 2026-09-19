@@ -70,7 +70,7 @@ export default function PropertyModal({ property: p, onClose }: Props) {
 
   const isNew = Date.now() - new Date(p.created_at).getTime() < 3 * 86400000;
 
-  const phone = p.contact_phone || "01151707244";
+  const phone = p.contact_phone || "01556956343";
   const wa = whatsappLink(phone, p);
 
   return (

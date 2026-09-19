@@ -34,7 +34,7 @@ const IMAGES = [
   "C:/Users/FT 2026/Downloads/WhatsApp6 Image 2026-09-17 at 2.08.58 PM.jpeg",
 ];
 
-const PHONE = "01151707244";
+const PHONE = "01556956343";
 
 const PROPS = [
   {

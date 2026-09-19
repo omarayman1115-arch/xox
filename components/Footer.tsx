@@ -6,7 +6,7 @@ import { useLang } from "@/lib/i18n";
 
 export default function Footer() {
   const { t } = useLang();
-  const wa = "https://wa.me/201151707244";
+  const wa = "https://wa.me/201556956343";
 
   return (
     <footer className="bg-[#172554] text-slate-300 mt-16">
@@ -50,11 +50,11 @@ export default function Footer() {
           <h3 className="font-bold text-white mb-3">{t("reachUs")}</h3>
           <div className="space-y-3 text-sm">
             <a
-              href="tel:+201151707244"
+              href="tel:+201556956343"
               className="flex items-center gap-2 hover:text-white transition-colors"
             >
               <Phone size={16} />
-              <span dir="ltr">+20 115 170 7244</span>
+              <span dir="ltr">+20 155 695 6343</span>
             </a>
             <a
               href={wa}

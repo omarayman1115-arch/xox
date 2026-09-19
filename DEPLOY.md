@@ -12,7 +12,7 @@
 | `SUPABASE_SECRET_KEY` | مفتاح `sb_secret_...` | ⚠️ سري — متحطوش في الكود |
 | `ADMIN_PASSWORD` | كلمة السر بتاعة لوحة التحكم | غيّرها عن المحلية |
 | `NEXT_PUBLIC_SITE_URL` | `https://اسم-مشروعك.vercel.app` | رابط موقعك النهائي — حطه بعد أول Deploy |
-| `NEXT_PUBLIC_DEFAULT_WHATSAPP` | `201151707244` | رقم الواتساب |
+| `NEXT_PUBLIC_DEFAULT_WHATSAPP` | `201556956343` | رقم الواتساب |
 
 ---
 
@@ -53,7 +53,7 @@ vercel env add ADMIN_PASSWORD production
 # اكتب كلمة السر القوية
 
 vercel env add NEXT_PUBLIC_DEFAULT_WHATSAPP production
-# الصق: 201151707244
+# الصق: 201556956343
 ```
 (كرر نفس الأوامر من غير كلمة production عشان تتحط في Preview كمان — أو علّم عليها من الموقع)
 

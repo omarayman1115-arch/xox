@@ -99,7 +99,7 @@ function SiteJsonLd() {
         url: siteUrl,
         description: "موقع التسويق العقاري — شقق وفلات ومحلات للبيع والإيجار في مصر",
         areaServed: { "@type": "Country", name: "Egypt" },
-        telephone: "+201151707244",
+        telephone: "+201556956343",
       },
       {
         "@type": "WebSite",

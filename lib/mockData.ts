@@ -17,7 +17,7 @@ const P = (p: Partial<Property> & { id: string; title: string; price: number }):
   bathrooms: 2,
   features: ["مصعد", "جراج خاص"],
   images: [],
-  contact_phone: "01151707244",
+  contact_phone: "01556956343",
   is_featured: false,
   is_published: true,
   ...p,

@@ -58,7 +58,7 @@ export default function LeadModal({ property, waUrl, onClose }: Props) {
       });
       if (!res.ok && res.status !== 503) {
         // 503 = جدول الليدز لسه مش متعمل — منفتحش واتساب ونعرض الخطأ
-        setError("حصلت مشكلة في التسجيل — كلمنا مباشرة على 01151707244");
+        setError("حصلت مشكلة في التسجيل — كلمنا مباشرة على 01556956343");
         setBusy(false);
         return;
       }
