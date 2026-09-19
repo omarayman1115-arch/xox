@@ -77,14 +77,14 @@ export default function AdminPage() {
   async function remove(id: string) {
     if (!confirm(t("confirmDelete"))) return;
     setBusy(true);
-    await fetch(`/api/admin/properties?id=${id}`, { method: "DELETE" });
+    await adminFetch(`/api/admin/properties?id=${id}`, { method: "DELETE" });
     await load();
     setBusy(false);
   }
 
   async function togglePublished(p: Property) {
     setBusy(true);
-    await fetch("/api/admin/properties", {
+    await adminFetch("/api/admin/properties", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: p.id, is_published: !p.is_published }),

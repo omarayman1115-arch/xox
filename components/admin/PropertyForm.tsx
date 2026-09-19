@@ -5,6 +5,7 @@ import Image from "next/image";
 import { X, UploadCloud, Star, ArrowLeft, Loader2 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import Select from "@/components/ui/Select";
+import { adminFetch } from "@/lib/adminFetch";
 import type { Property, ListingType, RentPeriod } from "@/lib/types";
 import { GOVERNORATES, getCities, getDistricts, PROPERTY_TYPES, FEATURES } from "@/lib/egypt";
 
@@ -52,7 +53,7 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
       const fd = new FormData();
       fd.append("file", file);
       try {
-        const res = await fetch("/api/upload", { method: "POST", body: fd });
+        const res = await adminFetch("/api/upload", { method: "POST", body: fd });
         const data = await res.json();
         if (res.ok && data.url) {
           setForm((f) => ({ ...f, images: [...f.images, data.url] }));
@@ -88,17 +89,21 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
       bathrooms: +form.bathrooms,
       rent_period: form.listing_type === "rent" ? form.rent_period : null,
     };
-    const res = await fetch("/api/admin/properties", {
+    const res = await adminFetch("/api/admin/properties", {
       method: initial ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(initial ? { ...payload, id: initial.id } : payload),
     });
     setBusy(false);
+    if (res.status === 401) {
+      alert(t("sessionExpired"));
+      return;
+    }
     if (res.ok) {
       alert(initial ? t("updated") : t("added"));
       onDone();
     } else {
-      alert("Error: " + (await res.text()));
+      alert("حدث خطأ أثناء الحفظ — حاول تاني");
     }
   }
 

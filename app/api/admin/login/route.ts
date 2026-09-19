@@ -18,16 +18,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "wrong_password" }, { status: 401 });
     }
 
-    const res = NextResponse.json({ ok: true });
-    res.cookies.set(ADMIN_COOKIE, adminToken(), {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 30 يوم
-    });
-
     // جلسة Supabase حقيقية — بس لو المستخدم اتعمل فعلاً في Auth
+    type AdminSession = {
+      access_token: string;
+      refresh_token: string;
+      expires_at?: number;
+    };
+    let session: AdminSession | null = null;
     if (isServerAdminConfigured) {
       try {
         const email = (process.env.ADMIN_EMAIL ?? DEFAULT_ADMIN_EMAIL).toLowerCase();
@@ -36,20 +33,27 @@ export async function POST(req: Request) {
           password: pwd,
         });
         if (!error && data.session) {
-          return NextResponse.json({
-            ok: true,
-            session: {
-              access_token: data.session.access_token,
-              refresh_token: data.session.refresh_token,
-              expires_at: data.session.expires_at,
-            },
-          });
+          session = {
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+            expires_at: data.session.expires_at,
+          };
         }
       } catch {
         /* تجاهل — الكوكي هيفضل شغال */
       }
     }
 
+    // ⚠️ ريسبونس واحد بس — الكوكي والجلسة معًا
+    // (قبل كده كان بيرجع ريسبونس تاني من غير الكوكي فمش بيتحفظ على الإنتاج)
+    const res = NextResponse.json({ ok: true, session });
+    res.cookies.set(ADMIN_COOKIE, adminToken(), {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30, // 30 يوم
+    });
     return res;
   } catch {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
