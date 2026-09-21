@@ -29,7 +29,7 @@ export default function FavoritesView({ onOpen }: { onOpen: (p: Property) => voi
         <p className="text-sm text-slate-400 mt-1">{t("favEmptyHint")}</p>
         <Link
           href="/"
-          className="inline-block mt-6 px-6 py-3 rounded-xl bg-[#1e3a8a] text-white font-bold hover:bg-[#172554] transition-colors"
+          className="inline-block mt-6 px-6 py-3 rounded-xl bg-accent-deep text-white font-bold hover:bg-accent-hover transition-colors"
         >
           {t("browseProperties")}
         </Link>

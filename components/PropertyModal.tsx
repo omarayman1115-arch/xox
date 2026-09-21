@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { X, Heart, BedDouble, Bath, Ruler, MapPin, Check, MessageCircle, Phone, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Heart, BedDouble, Bath, Ruler, MapPin, Check, MessageCircle, Phone, ChevronLeft, ChevronRight, Video, HandCoins } from "lucide-react";
 import type { Property } from "@/lib/types";
 import { useLang } from "@/lib/i18n";
 import { useFav } from "./FavoritesProvider";
@@ -81,16 +81,16 @@ export default function PropertyModal({ property: p, onClose }: Props) {
       aria-label={p.title}
     >
       {/* الخلفية */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* النافذة — بوتوم شيت على الموبايل وبوب أب على الديسكتوب */}
-      <div className="relative bg-white w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl max-h-[92vh] sm:max-h-[88vh] flex flex-col slide-up-sheet sm:animate-none overflow-hidden shadow-2xl">
+      <div className="relative bg-surface w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl max-h-[92vh] sm:max-h-[88vh] flex flex-col slide-up-sheet sm:animate-none overflow-hidden shadow-2xl">
         {/* رأس النافذة */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <span
               className={`px-2.5 py-1 rounded-lg text-xs font-bold text-white shrink-0 ${
-                p.listing_type === "sale" ? "bg-[#1e3a8a]" : "bg-emerald-600"
+                p.listing_type === "sale" ? "bg-accent-deep" : "bg-emerald-500"
               }`}
             >
               {p.listing_type === "sale" ? t("forSale") : t("forRent")}
@@ -103,6 +103,11 @@ export default function PropertyModal({ property: p, onClose }: Props) {
             {isNew && (
               <span className="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-rose-500 shrink-0">
                 {t("new")}
+              </span>
+            )}
+            {p.video && (
+              <span className="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-emerald-500 shrink-0 flex items-center gap-1">
+                <Video size={12} /> فيديو
               </span>
             )}
           </div>
@@ -125,9 +130,9 @@ export default function PropertyModal({ property: p, onClose }: Props) {
         </div>
 
         {/* المحتوى */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
           {/* صورة كبيرة — بتتغير لما تدوس على صورة من المصغرات */}
-          <div className="relative aspect-[16/10] bg-slate-100">
+          <div className="relative aspect-[16/10] bg-ink">
             <Image
               key={images[imgIdx]}
               src={images[imgIdx]}
@@ -149,7 +154,7 @@ export default function PropertyModal({ property: p, onClose }: Props) {
                 type="button"
                 onClick={nextImg}
                 aria-label={lang === "ar" ? "الصورة التالية" : "Next image"}
-                className="absolute top-1/2 -translate-y-1/2 end-3 w-9 h-9 rounded-full bg-white/85 hover:bg-white text-slate-700 shadow-md backdrop-blur flex items-center justify-center active:scale-95 transition-all"
+                className="absolute top-1/2 -translate-y-1/2 end-3 w-9 h-9 rounded-full bg-surface-2/90 hover:bg-surface-2 text-slate-800 shadow-md backdrop-blur flex items-center justify-center active:scale-95 transition-[transform,background-color]"
               >
                 {lang === "ar" ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
               </button>
@@ -159,12 +164,25 @@ export default function PropertyModal({ property: p, onClose }: Props) {
                 type="button"
                 onClick={prevImg}
                 aria-label={lang === "ar" ? "الصورة السابقة" : "Previous image"}
-                className="absolute top-1/2 -translate-y-1/2 start-3 w-9 h-9 rounded-full bg-white/85 hover:bg-white text-slate-700 shadow-md backdrop-blur flex items-center justify-center active:scale-95 transition-all"
+                className="absolute top-1/2 -translate-y-1/2 start-3 w-9 h-9 rounded-full bg-surface-2/90 hover:bg-surface-2 text-slate-800 shadow-md backdrop-blur flex items-center justify-center active:scale-95 transition-[transform,background-color]"
               >
                 {lang === "ar" ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
               </button>
             )}
           </div>
+
+          {/* مشغل الفيديو — تحت الصور لو فيه فيديو */}
+          {p.video && (
+            <div className="px-4 pt-3">
+              <video
+                src={p.video}
+                controls
+                preload="metadata"
+                playsInline
+                className="w-full rounded-xl border border-slate-200 bg-black"
+              />
+            </div>
+          )}
 
           {/* المصغرات — كلها قابلة للضغط والصورة المختارة عليها إطار */}
           {images.length > 1 && (
@@ -175,9 +193,9 @@ export default function PropertyModal({ property: p, onClose }: Props) {
                   type="button"
                   onClick={() => setImgIdx(i)}
                   aria-label={`عرض الصورة ${i + 1}`}
-                  className={`relative w-20 h-16 rounded-xl overflow-hidden shrink-0 transition-all ${
+                  className={`relative w-20 h-16 rounded-xl overflow-hidden shrink-0 transition-[opacity,box-shadow] ${
                     i === imgIdx
-                      ? "ring-2 ring-[#1e3a8a] ring-offset-2 ring-offset-white"
+                      ? "ring-2 ring-accent ring-offset-2 ring-offset-surface"
                       : "opacity-70 hover:opacity-100"
                   }`}
                 >
@@ -192,31 +210,37 @@ export default function PropertyModal({ property: p, onClose }: Props) {
             <div>
               <h2 className="text-xl font-extrabold text-slate-800">{p.title}</h2>
               <p className="flex items-center gap-1.5 text-sm text-slate-500 mt-1.5">
-                <MapPin size={15} className="text-[#1e3a8a] shrink-0" />
+                <MapPin size={15} className="text-accent shrink-0" />
                 {locationText}
               </p>
               <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-extrabold text-[#1e3a8a]">
+                <span className="text-2xl font-extrabold text-accent">
                   {formatPrice(p.price)} <span className="text-sm">{t("egp")}</span>
                 </span>
                 <span className="text-xs text-slate-500 font-semibold">{priceSuffix}</span>
+                {p.negotiable && (
+                  <span className="ms-auto flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold shrink-0">
+                    <HandCoins size={13} />
+                    {t("negotiableBadge")}
+                  </span>
+                )}
               </div>
             </div>
 
             {/* المواصفات */}
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-slate-50 rounded-xl p-3 text-center">
-                <BedDouble className="mx-auto text-[#1e3a8a]" size={18} />
+                <BedDouble className="mx-auto text-accent" size={18} />
                 <p className="font-extrabold text-slate-800 mt-1">{p.bedrooms || "-"}</p>
                 <p className="text-[11px] text-slate-400 font-bold">{t("bedrooms")}</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-3 text-center">
-                <Bath className="mx-auto text-[#1e3a8a]" size={18} />
+                <Bath className="mx-auto text-accent" size={18} />
                 <p className="font-extrabold text-slate-800 mt-1">{p.bathrooms || "-"}</p>
                 <p className="text-[11px] text-slate-400 font-bold">{t("bathrooms")}</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-3 text-center">
-                <Ruler className="mx-auto text-[#1e3a8a]" size={18} />
+                <Ruler className="mx-auto text-accent" size={18} />
                 <p className="font-extrabold text-slate-800 mt-1">{p.area}</p>
                 <p className="text-[11px] text-slate-400 font-bold">
                   {lang === "ar" ? "المساحة م²" : "Area m²"}
@@ -242,7 +266,7 @@ export default function PropertyModal({ property: p, onClose }: Props) {
                   {p.features.map((f) => (
                     <span
                       key={f}
-                      className="flex items-center gap-1.5 text-xs text-slate-700 bg-slate-50 rounded-lg px-2.5 py-1.5 font-semibold"
+                      className="flex items-center gap-1.5 text-xs text-slate-700 bg-ink rounded-lg px-2.5 py-1.5 font-semibold"
                     >
                       <Check size={13} className="text-emerald-600" />
                       {f}
@@ -259,7 +283,7 @@ export default function PropertyModal({ property: p, onClose }: Props) {
         </div>
 
         {/* أزرار التواصل الثابتة */}
-        <div className="shrink-0 border-t border-slate-100 p-3 flex gap-2 bg-white">
+        <div className="shrink-0 border-t border-slate-200 p-3 flex gap-2 bg-surface">
           {showLeadForm ? (
             <button
               onClick={() => setLeadOpen(true)}
@@ -279,7 +303,7 @@ export default function PropertyModal({ property: p, onClose }: Props) {
           )}
           <a
             href={`tel:${phone}`}
-            className="flex-1 py-3 rounded-xl bg-[#1e3a8a] hover:bg-[#172554] text-white font-bold text-center text-sm active:scale-95 transition-transform"
+            className="flex-1 py-3 rounded-xl bg-accent-deep hover:bg-accent-hover text-white font-bold text-center text-sm active:scale-95 transition-transform"
           >
             📞 {t("callNow")}
           </a>

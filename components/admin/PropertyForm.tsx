@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { X, UploadCloud, Star, ArrowLeft, Loader2 } from "lucide-react";
+import { X, UploadCloud, Star, ArrowLeft, Loader2, Video } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import Select from "@/components/ui/Select";
 import { adminFetch } from "@/lib/adminFetch";
@@ -37,6 +37,8 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
     bathrooms: initial?.bathrooms?.toString() ?? "1",
     features: initial?.features ?? ([] as string[]),
     images: initial?.images ?? ([] as string[]),
+    video: initial?.video ?? "",
+    negotiable: initial?.negotiable ?? false,
     contact_phone: initial?.contact_phone ?? "01556956343",
     is_featured: initial?.is_featured ?? false,
     is_published: initial?.is_published ?? true,
@@ -46,7 +48,9 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
 
   /* ---------- رفع الصور ---------- */
   async function uploadFiles(files: FileList | File[]) {
-    const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const list = Array.from(files).filter(
+      (f) => f.type.startsWith("image/") || f.type.startsWith("video/")
+    );
     if (list.length === 0) return;
     setUploading(true);
     for (const file of list) {
@@ -56,7 +60,13 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
         const res = await adminFetch("/api/upload", { method: "POST", body: fd });
         const data = await res.json();
         if (res.ok && data.url) {
-          setForm((f) => ({ ...f, images: [...f.images, data.url] }));
+          if (file.type.startsWith("video/")) {
+            setForm((f) => ({ ...f, video: data.url }));
+          } else {
+            setForm((f) => ({ ...f, images: [...f.images, data.url] }));
+          }
+        } else if (res.status === 413) {
+          alert(file.type.startsWith("video/") ? t("videoTooBig") : (data.error ?? "Upload failed"));
         } else {
           alert(data.error ?? "Upload failed");
         }
@@ -89,11 +99,18 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
       bathrooms: +form.bathrooms,
       rent_period: form.listing_type === "rent" ? form.rent_period : null,
     };
-    const res = await adminFetch("/api/admin/properties", {
-      method: initial ? "PATCH" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(initial ? { ...payload, id: initial.id } : payload),
-    });
+    let res: Response;
+    try {
+      res = await adminFetch("/api/admin/properties", {
+        method: initial ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(initial ? { ...payload, id: initial.id } : payload),
+      });
+    } catch {
+      setBusy(false);
+      alert("تعذّر الاتصال بالسيرفر — اتأكد إن الاتصال شغال وجرّب تاني");
+      return;
+    }
     setBusy(false);
     if (res.status === 401) {
       alert(t("sessionExpired"));
@@ -108,7 +125,7 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
   }
 
   const inputCls =
-    "w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30 focus:border-[#1e3a8a] text-sm";
+    "w-full px-4 py-3 rounded-xl border border-slate-300 bg-surface-2 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent text-sm";
   const labelCls = "block text-sm font-bold text-slate-700 mb-1.5";
 
   return (
@@ -126,7 +143,7 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
         {initial ? t("editProperty") : t("addProperty")}
       </h1>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 space-y-5">
+      <div className="bg-surface rounded-2xl border border-slate-200 p-5 md:p-6 space-y-5">
         {/* العنوان */}
         <div>
           <label className={labelCls}>
@@ -153,7 +170,7 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
                   onClick={() => set({ listing_type: v })}
                   className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${
                     form.listing_type === v
-                      ? "bg-white text-[#1e3a8a] shadow-sm"
+                      ? "bg-surface text-accent shadow-sm"
                       : "text-slate-500"
                   }`}
                 >
@@ -324,8 +341,8 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
                   }
                   className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
                     on
-                      ? "bg-[#1e3a8a] text-white border-[#1e3a8a]"
-                      : "bg-white text-slate-600 border-slate-300 hover:border-[#1e3a8a]"
+                      ? "bg-accent-deep text-white border-accent-deep"
+                      : "bg-surface text-slate-600 border-slate-300 hover:border-accent"
                   }`}
                 >
                   {f}
@@ -350,20 +367,20 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
             onClick={() => fileRef.current?.click()}
             className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-colors ${
               dragOver
-                ? "border-[#1e3a8a] bg-[#1e3a8a]/5"
-                : "border-slate-300 hover:border-[#1e3a8a]/50"
+                ? "border-accent bg-accent/10"
+                : "border-slate-300 hover:border-accent/50"
             }`}
           >
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
+              accept="image/*,video/mp4,video/webm,video/quicktime"
               multiple
               hidden
               onChange={(e) => e.target.files && uploadFiles(e.target.files)}
             />
             {uploading ? (
-              <Loader2 className="mx-auto text-[#1e3a8a] animate-spin" size={32} />
+              <Loader2 className="mx-auto text-accent animate-spin" size={32} />
             ) : (
               <UploadCloud className="mx-auto text-slate-400" size={32} />
             )}
@@ -379,7 +396,7 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
                 <div key={url} className="relative aspect-square rounded-xl overflow-hidden group">
                   <Image src={url} alt="" fill sizes="120px" className="object-cover" />
                   {i === 0 && (
-                    <span className="absolute top-1 start-1 px-1.5 py-0.5 rounded-md bg-amber-400 text-[#172554] text-[10px] font-extrabold">
+                    <span className="absolute top-1 start-1 px-1.5 py-0.5 rounded-md bg-amber-400 text-ink text-[10px] font-extrabold">
                       {t("mainImage")}
                     </span>
                   )}
@@ -395,7 +412,7 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
                             ],
                           })
                         }
-                        className="p-1 rounded bg-white/90"
+                        className="p-1 rounded bg-surface-2/90"
                         title={t("mainImage")}
                       >
                         <Star size={12} className="text-amber-500" />
@@ -418,6 +435,35 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
           )}
         </div>
 
+        {/* الفيديو */}
+        <div>
+          <label className={labelCls}>{t("video")}</label>
+          <div className="flex gap-2">
+            <input
+              value={form.video}
+              onChange={(e) => set({ video: e.target.value })}
+              placeholder={t("videoPh")}
+              dir="ltr"
+              className={inputCls + " flex-1"}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 rounded-xl border border-slate-300 text-slate-600 font-bold text-xs hover:border-accent whitespace-nowrap shrink-0"
+            >
+              <UploadCloud size={15} />
+              {t("uploadVideo")}
+            </button>
+          </div>
+          {form.video && (
+            <video
+              src={form.video}
+              controls
+              className="mt-3 w-full max-w-sm rounded-xl border border-slate-200"
+            />
+          )}
+        </div>
+
         {/* رقم التواصل */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -430,13 +476,22 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
               className={inputCls}
             />
           </div>
-          <div className="flex items-end gap-4">
+          <div className="flex items-end gap-4 flex-wrap">
+            <label className="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.negotiable}
+                onChange={(e) => set({ negotiable: e.target.checked })}
+                className="w-4 h-4 accent-[#7aa5f8]"
+              />
+              💬 {t("negotiable")}
+            </label>
             <label className="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={form.is_featured}
                 onChange={(e) => set({ is_featured: e.target.checked })}
-                className="w-4 h-4 accent-[#1e3a8a]"
+                className="w-4 h-4 accent-[#7aa5f8]"
               />
               ⭐ {t("featured")}
             </label>
@@ -445,7 +500,7 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
                 type="checkbox"
                 checked={form.is_published}
                 onChange={(e) => set({ is_published: e.target.checked })}
-                className="w-4 h-4 accent-[#1e3a8a]"
+                className="w-4 h-4 accent-[#7aa5f8]"
               />
               {t("publish")}
             </label>
@@ -458,7 +513,7 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
         <button
           type="submit"
           disabled={busy || uploading}
-          className="flex-1 py-3.5 rounded-xl bg-[#1e3a8a] text-white font-bold hover:bg-[#172554] transition-colors disabled:opacity-60 active:scale-[0.99]"
+          className="flex-1 py-3.5 rounded-xl bg-accent-deep text-white font-bold hover:bg-accent-hover transition-colors disabled:opacity-60 active:scale-[0.99]"
         >
           {busy ? t("saving") : t("save")}
         </button>

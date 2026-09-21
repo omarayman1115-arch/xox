@@ -26,14 +26,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "no_file" }, { status: 400 });
     }
 
-    // حد أقصى 5 ميجا
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: "file_too_large" }, { status: 413 });
+    const isVideo = file.type.startsWith("video/");
+    const isImage = file.type.startsWith("image/");
+    if (!isImage && !isVideo) {
+      return NextResponse.json({ error: "unsupported_type" }, { status: 415 });
     }
 
-    // صور بس
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "not_an_image" }, { status: 415 });
+    // حد أقصى: 5 ميجا للصور — 50 ميجا للفيديو
+    const maxBytes = isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      return NextResponse.json({ error: "file_too_large" }, { status: 413 });
     }
 
     const supabase = getSupabaseAdmin();
@@ -41,8 +43,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "supabase_missing" }, { status: 503 });
     }
 
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
+    // الصور في bucket الصور — الفيديو في bucket الصور كمان (نفس الـ bucket، امتداد مختلف)
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? (isVideo ? "mp4" : "jpg");
+    const name = `${isVideo ? "videos/" : ""}${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 10)}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("property-images")

@@ -18,11 +18,11 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "xox | عقارك اللي بتحلم بيه موجود هنا — عقارات مصر",
+    default: "xox | عقارات للبيع والإيجار في مصر — شقق وفيلات ومحلات",
     template: "%s | xox",
   },
   description:
-    "xox — موقع التسويق العقاري الأول في مصر. شقق وفلات ومحلات تجارية للبيع والإيجار في كل المحافظات. فلترة سهلة بالمحافظة والمدينة والمساحة وعدد الغرف والسعر.",
+    "xox — ابحث عن شقق وفيلات ومحلات تجارية وشاليهات للبيع والإيجار في كل محافظات مصر. فلترة بالمحافظة والمدينة والمساحة وعدد الغرف والسعر.",
   keywords: [
     "عقارات مصر",
     "شقق للبيع",
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     alternateLocale: "en_US",
     url: siteUrl,
     siteName: "xox",
-    title: "xox | عقارك اللي بتحلم بيه موجود هنا",
+    title: "xox | عقارات للبيع والإيجار في مصر",
     description:
       "شقق وفلات ومحلات للبيع والإيجار في كل محافظات مصر — فلترة ذكية وسهلة.",
     images: [
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "xox | عقارك اللي بتحلم بيه موجود هنا",
+    title: "xox | عقارات للبيع والإيجار في مصر",
     description: "شقق وفلات ومحلات للبيع والإيجار في كل محافظات مصر.",
     images: ["/og-image.svg"],
   },
@@ -82,7 +82,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1e3a8a",
+  themeColor: "#f8fafc",
   width: "device-width",
   initialScale: 1,
 };
@@ -128,13 +128,27 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ar" dir="rtl" className={cairo.variable}>
+    <html
+      lang="ar"
+      dir="rtl"
+      className={cairo.variable}
+      suppressHydrationWarning
+    >
       <body className="min-h-screen flex flex-col antialiased">
+        {/* يمنع وميض اللون: يطبّق الوضع المحفوظ قبل أول رسم */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem("xox-theme")!=="dark"){document.documentElement.classList.add("light")}}catch(e){document.documentElement.classList.add("light")}`,
+          }}
+        />
         <LangProvider>
           <FavoritesProvider>
             <SiteJsonLd />
+            <a href="#main" className="skip-link">
+              تخطي إلى المحتوى
+            </a>
             <Header />
-            <main className="flex-1">{children}</main>
+            <main id="main" className="flex-1">{children}</main>
             <Footer />
           </FavoritesProvider>
         </LangProvider>

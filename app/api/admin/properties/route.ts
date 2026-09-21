@@ -15,6 +15,18 @@ function unauthorized() {
   return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 }
 
+/** هل الخطأ بسبب عمود مش موجود لسه (قبل تنفيذ negotiable-video.sql)؟ */
+function isMissingColumn(e: { code?: string; message?: string } | null): boolean {
+  if (!e) return false;
+  return e.code === "PGRST204" || /column .* does not exist|Could not find the/i.test(e.message ?? "");
+}
+
+/** نسخة من السجل من غير الأعمدة الجديدة — احتياط قبل تنفيذ الـ SQL */
+function stripNewFields<T extends Record<string, unknown>>(obj: T): Record<string, unknown> {
+  const { video, negotiable, ...rest } = obj;
+  return rest;
+}
+
 /* ---------- القائمة ---------- */
 export async function GET(req: Request) {
   if (!(await requireAdmin(req))) return unauthorized();
@@ -59,6 +71,8 @@ export async function POST(req: Request) {
     bathrooms: Number(body.bathrooms) || 0,
     features: body.features ?? [],
     images: body.images ?? [],
+    video: body.video ?? null,
+    negotiable: !!body.negotiable,
     contact_phone: body.contact_phone ?? "",
     is_featured: !!body.is_featured,
     is_published: body.is_published ?? true,
@@ -66,11 +80,19 @@ export async function POST(req: Request) {
 
   const supabase = getSupabaseAdmin();
   if (supabase) {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from(PROPERTIES_TABLE)
       .insert(record)
       .select()
       .single();
+    // الأعمدة الجديدة لسه مش متضافة في القاعدة؟ نعيد المحاولة من غيرهم
+    if (error && isMissingColumn(error)) {
+      ({ data, error } = await supabase
+        .from(PROPERTIES_TABLE)
+        .insert(stripNewFields(record as unknown as Record<string, unknown>))
+        .select()
+        .single());
+    }
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data, { status: 201 });
   }
@@ -86,13 +108,33 @@ export async function PATCH(req: Request) {
 
   const supabase = getSupabaseAdmin();
   if (supabase) {
-    const { id, ...patch } = body;
-    const { data, error } = await supabase
+    const { id, ...rest } = body;
+    // قائمة بيضاء — الأعمدة المسموح تعديلها فقط (يحمي أعمدة النظام)
+    const patch: Record<string, unknown> = {};
+    const allowed = [
+      "listing_type", "rent_period", "property_type", "title", "description",
+      "price", "governorate", "city", "district", "area", "bedrooms",
+      "bathrooms", "features", "images", "video", "negotiable",
+      "contact_phone", "is_featured", "is_published",
+    ] as const;
+    for (const k of allowed) {
+      if (k in rest) patch[k] = rest[k as keyof typeof rest];
+    }
+    let { data, error } = await supabase
       .from(PROPERTIES_TABLE)
       .update(patch)
       .eq("id", id)
       .select()
       .single();
+    // نفس الاحتياط: قبل تنفيذ negotiable-video.sql ننجح من غير الأعمدة الجديدة
+    if (error && isMissingColumn(error)) {
+      ({ data, error } = await supabase
+        .from(PROPERTIES_TABLE)
+        .update(stripNewFields(patch))
+        .eq("id", id)
+        .select()
+        .single());
+    }
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
   }

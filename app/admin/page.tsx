@@ -97,9 +97,9 @@ export default function AdminPage() {
   if (authed === null || authed === false) {
     return (
       <div className="max-w-md mx-auto px-4 py-20">
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-8 text-center">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-[#1e3a8a]/10 flex items-center justify-center mb-4">
-            <Lock size={28} className="text-[#1e3a8a]" />
+        <div className="bg-surface rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center mb-4">
+            <Lock size={28} className="text-accent" />
           </div>
           <h1 className="text-2xl font-extrabold text-slate-800 mb-1">
             {t("login")}
@@ -112,13 +112,13 @@ export default function AdminPage() {
               value={pwd}
               onChange={(e) => setPwd(e.target.value)}
               placeholder={t("password")}
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30 focus:border-[#1e3a8a] text-center"
+              className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-surface-2 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent text-center"
               autoFocus
             />
             {error && <p className="text-rose-600 text-sm font-semibold">{error}</p>}
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-[#1e3a8a] text-white font-bold hover:bg-[#172554] transition-colors active:scale-[0.98]"
+              className="w-full py-3 rounded-xl bg-accent-deep text-white font-bold hover:bg-accent-hover transition-colors active:scale-[0.98]"
             >
               {t("loginBtn")}
             </button>
@@ -146,7 +146,7 @@ export default function AdminPage() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <h1 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
-          <Building2 className="text-[#1e3a8a]" />
+          <Building2 className="text-accent" />
           {t("dashboard")}
           <span className="text-sm font-bold text-slate-400">({items.length})</span>
         </h1>
@@ -160,14 +160,14 @@ export default function AdminPage() {
           </Link>
           <button
             onClick={() => setEditing("new")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1e3a8a] text-white font-bold text-sm hover:bg-[#172554] transition-colors active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent-deep text-white font-bold text-sm hover:bg-accent-hover transition-colors active:scale-95"
           >
             <Plus size={18} />
             {t("addProperty")}
           </button>
           <button
             onClick={logout}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-sm hover:bg-slate-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-sm hover:bg-surface-2"
           >
             <LogOut size={16} />
             {t("logout")}
@@ -176,9 +176,9 @@ export default function AdminPage() {
       </div>
 
       {/* الجدول — ديسكتوب */}
-      <div className="hidden md:block bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="hidden md:block bg-surface rounded-2xl border border-slate-200 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-slate-500">
+          <thead className="bg-surface-2 text-slate-500">
             <tr>
               <th className="text-start px-4 py-3 font-bold">العقار</th>
               <th className="text-start px-4 py-3 font-bold">{t("price")}</th>
@@ -188,9 +188,9 @@ export default function AdminPage() {
               <th className="px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-200">
             {items.map((p) => (
-              <tr key={p.id} className="hover:bg-slate-50/60">
+              <tr key={p.id} className="hover:bg-surface-2/60">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="relative w-14 h-11 rounded-lg overflow-hidden shrink-0">
@@ -207,7 +207,7 @@ export default function AdminPage() {
                     </span>
                   </div>
                 </td>
-                <td className="px-4 py-3 font-bold text-[#1e3a8a] whitespace-nowrap">
+                <td className="px-4 py-3 font-bold text-accent whitespace-nowrap">
                   {formatPrice(p.price)} {t("egp")}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
@@ -263,7 +263,7 @@ export default function AdminPage() {
         {items.map((p) => (
           <div
             key={p.id}
-            className="bg-white rounded-2xl border border-slate-200 p-3 flex gap-3"
+            className="bg-surface rounded-2xl border border-slate-200 p-3 flex gap-3"
           >
             <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0">
               <Image
@@ -276,7 +276,7 @@ export default function AdminPage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-slate-700 line-clamp-1">{p.title}</p>
-              <p className="text-[#1e3a8a] font-extrabold text-sm mt-1">
+              <p className="text-accent font-extrabold text-sm mt-1">
                 {formatPrice(p.price)} {t("egp")}
               </p>
               <p className="text-xs text-slate-400 mt-0.5">

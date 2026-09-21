@@ -18,7 +18,7 @@ export default function Select({
     <div className="relative">
       <select
         {...rest}
-        className={`appearance-none w-full px-4 py-3 pe-10 rounded-xl border border-slate-300 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30 focus:border-[#1e3a8a] cursor-pointer transition-colors ${className}`}
+        className={`appearance-none w-full px-4 py-3 pe-10 rounded-xl border border-slate-300 bg-surface-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent cursor-pointer transition-colors ${className}`}
       >
         {children}
       </select>

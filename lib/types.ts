@@ -18,6 +18,8 @@ export interface Property {
   bathrooms: number;
   features: string[];
   images: string[];
+  video?: string | null;
+  negotiable?: boolean;
   contact_phone: string;
   is_featured: boolean;
   is_published: boolean;

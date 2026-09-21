@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Fragment } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -46,6 +46,8 @@ export default function LeadsPage() {
   const [error, setError] = useState("");
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [filter, setFilter] = useState<"all" | "contacted" | "not_contacted">("all");
+  // العميل اللي خانة تفاصيله مفتوحة — واحدة بس في نفس الوقت
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -130,15 +132,15 @@ export default function LeadsPage() {
   if (authed === false) {
     return (
       <div className="max-w-md mx-auto px-4 py-20">
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-8 text-center">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-[#1e3a8a]/10 flex items-center justify-center mb-4">
+        <div className="bg-surface rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center mb-4">
             <Lock />
           </div>
           <h1 className="text-2xl font-extrabold text-slate-800 mb-1">{t("login")}</h1>
           <p className="text-sm text-slate-500 mb-6">{t("adminOnly")}</p>
           <Link
             href="/admin"
-            className="inline-block px-6 py-3 rounded-xl bg-[#1e3a8a] text-white font-bold hover:bg-[#172554] transition-colors"
+            className="inline-block px-6 py-3 rounded-xl bg-accent-deep text-white font-bold hover:bg-accent-hover transition-colors"
           >
             {t("loginBtn")}
           </Link>
@@ -151,21 +153,21 @@ export default function LeadsPage() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <h1 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
-          <Users className="text-[#1e3a8a]" />
+          <Users className="text-accent" />
           العملاء المهتمين
           <span className="text-sm font-bold text-slate-400">({counts.all})</span>
         </h1>
         <div className="flex items-center gap-2">
           <button
             onClick={load}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-sm hover:bg-slate-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-sm hover:bg-surface-2"
           >
             <RefreshCw size={15} />
             تحديث
           </button>
           <Link
             href="/admin"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-sm hover:bg-slate-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-sm hover:bg-surface-2"
           >
             <Building2 size={15} />
             العقارات
@@ -177,7 +179,7 @@ export default function LeadsPage() {
               await fetch("/api/admin/login", { method: "DELETE" });
               window.location.href = "/admin";
             }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-sm hover:bg-slate-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-sm hover:bg-surface-2"
           >
             <LogOut size={15} />
             {t("logout")}
@@ -199,8 +201,8 @@ export default function LeadsPage() {
             onClick={() => setFilter(v)}
             className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
               filter === v
-                ? "bg-[#1e3a8a] text-white"
-                : "bg-white border border-slate-300 text-slate-600 hover:border-[#1e3a8a]/40"
+                ? "bg-accent-deep text-white"
+                : "bg-surface border border-slate-300 text-slate-600 hover:border-accent/40"
             }`}
           >
             {label}
@@ -218,11 +220,11 @@ export default function LeadsPage() {
       {loading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-slate-100 h-16 animate-pulse" />
+            <div key={i} className="bg-surface rounded-2xl border border-slate-200 h-16 animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-slate-100">
+        <div className="text-center py-16 bg-surface rounded-2xl border border-slate-200">
           <p className="text-4xl mb-3">📞</p>
           <p className="font-bold text-slate-600">مفيش عملاء لسه</p>
           <p className="text-sm text-slate-400 mt-1">
@@ -232,9 +234,9 @@ export default function LeadsPage() {
       ) : (
         <>
           {/* جدول — ديسكتوب */}
-          <div className="hidden md:block bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <div className="hidden md:block bg-surface rounded-2xl border border-slate-200 overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-slate-500">
+              <thead className="bg-surface-2 text-slate-500">
                 <tr>
                   <th className="text-start px-4 py-3 font-bold">العميل</th>
                   <th className="text-start px-4 py-3 font-bold">رقم الموبايل</th>
@@ -244,14 +246,15 @@ export default function LeadsPage() {
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-200">
                 {filtered.map((l) => (
-                  <tr key={l.id} className="hover:bg-slate-50/60">
+                  <Fragment key={l.id}>
+                  <tr className="hover:bg-surface-2/60">
                     <td className="px-4 py-3 font-bold text-slate-700">{l.customer_name}</td>
                     <td className="px-4 py-3" dir="ltr">
                       <a
                         href={`tel:+${l.phone_number.startsWith("0") ? "2" + l.phone_number : l.phone_number}`}
-                        className="flex items-center gap-1.5 text-[#1e3a8a] font-bold hover:underline"
+                        className="flex items-center gap-1.5 text-accent font-bold hover:underline"
                       >
                         <Phone size={14} />
                         {l.phone_number}
@@ -284,11 +287,7 @@ export default function LeadsPage() {
                           {l.status === "contacted" ? <Check size={13} /> : <Clock size={13} />}
                           {l.status === "contacted" ? "تم التواصل" : "لم يتم التواصل"}
                         </button>
-                        <NoteButton lead={l} onSave={(n) => saveNote(l, n)} />
                       </div>
-                      {l.note && (
-                        <p className="text-xs text-slate-500 mt-1.5 max-w-72 whitespace-pre-line">📝 {l.note}</p>
-                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 justify-end">
@@ -311,6 +310,17 @@ export default function LeadsPage() {
                       </div>
                     </td>
                   </tr>
+                  <tr>
+                    <td colSpan={6} className="px-4 pb-3">
+                      <LeadDetailRow
+                        lead={l}
+                        open={expanded === l.id}
+                        onToggle={() => setExpanded(expanded === l.id ? null : l.id)}
+                        onSave={(n) => saveNote(l, n)}
+                      />
+                    </td>
+                  </tr>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -319,13 +329,13 @@ export default function LeadsPage() {
           {/* كروت — موبايل */}
           <div className="md:hidden space-y-3">
             {filtered.map((l) => (
-              <div key={l.id} className="bg-white rounded-2xl border border-slate-200 p-4">
+              <div key={l.id} className="bg-surface rounded-2xl border border-slate-200 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-extrabold text-slate-800">{l.customer_name}</p>
                     <a
                       href={`tel:+${l.phone_number.startsWith("0") ? "2" + l.phone_number : l.phone_number}`}
-                      className="text-[#1e3a8a] font-bold text-sm mt-0.5 block"
+                      className="text-accent font-bold text-sm mt-0.5 block"
                       dir="ltr"
                     >
                       {l.phone_number}
@@ -343,12 +353,8 @@ export default function LeadsPage() {
                       {l.status === "contacted" ? <Check size={13} /> : <Clock size={13} />}
                       {l.status === "contacted" ? "تم التواصل" : "لم يتم"}
                     </button>
-                    <NoteButton lead={l} onSave={(n) => saveNote(l, n)} />
                   </div>
                 </div>
-                {l.note && (
-                  <p className="text-xs text-slate-500 mt-2 whitespace-pre-line">📝 {l.note}</p>
-                )}
                 <p className="text-xs text-slate-400 mt-2">{fmtDate(l.created_at)}</p>
                 <div className="flex gap-2 mt-3">
                   <a
@@ -363,7 +369,7 @@ export default function LeadsPage() {
                     <a
                       href={`/properties/${l.property_id}`}
                       target="_blank"
-                      className="flex-1 text-center py-2 rounded-lg bg-slate-50 text-slate-600 text-xs font-bold"
+                      className="flex-1 text-center py-2 rounded-lg bg-surface-2 text-slate-600 text-xs font-bold"
                     >
                       العقار
                     </a>
@@ -375,6 +381,13 @@ export default function LeadsPage() {
                     <Trash2 size={13} />
                   </button>
                 </div>
+                <LeadDetailRow
+                  lead={l}
+                  open={expanded === l.id}
+                  onToggle={() => setExpanded(expanded === l.id ? null : l.id)}
+                  onSave={(n) => saveNote(l, n)}
+                  mobile
+                />
               </div>
             ))}
           </div>
@@ -384,53 +397,106 @@ export default function LeadsPage() {
   );
 }
 
-/** زرار الملاحظة — بيفتح بوكس صغير للكتابة والحفظ */
-function NoteButton({ lead, onSave }: { lead: Lead; onSave: (note: string) => void }) {
-  const [open, setOpen] = useState(false);
+/**
+ * سطر التفاصيل الكامل تحت كل عميل — يتفتح/يتقفل بزرار
+ * جواه textarea واسع + حفظ فوري، وبيورج الملاحظة المحفوظة وهي مقفول
+ */
+function LeadDetailRow({
+  lead,
+  open,
+  onToggle,
+  onSave,
+  mobile = false,
+}: {
+  lead: Lead;
+  open: boolean;
+  onToggle: () => void;
+  onSave: (note: string) => void;
+  mobile?: boolean;
+}) {
   const [val, setVal] = useState(lead.note ?? "");
-  const hasNote = !!lead.note;
+  const [saved, setSaved] = useState(false);
+
+  // لو الملاحظة اتحدثت من بره، حدّث القيمة المحلية
+  useEffect(() => {
+    setVal(lead.note ?? "");
+  }, [lead.note]);
+
+  function save() {
+    onSave(val);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
+
+  if (mobile) {
+    return (
+      <div className="mt-3">
+        <button
+          onClick={onToggle}
+          className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg w-full ${
+            lead.note ? "bg-amber-50 text-amber-700" : "bg-surface-2 text-slate-500"
+          }`}
+        >
+          <StickyNote size={13} />
+          {lead.note ? "التفاصيل محفوظة — دوس للتعديل" : "أضف تفاصيل العميل"}
+          <span className="ms-auto">{open ? "▲" : "▼"}</span>
+        </button>
+        {open && (
+          <div className="mt-2">
+            <textarea
+              value={val}
+              onChange={(e) => setVal(e.target.value)}
+              placeholder="تفاصيل المكالمة كاملة: اتفقنا على كام؟ إمتى بيرد؟ أي ملاحظات مهمة..."
+              rows={4}
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-surface-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent placeholder:text-slate-400"
+            />
+            <div className="flex items-center gap-2 mt-2">
+              <button
+                onClick={save}
+                className="flex-1 py-2.5 rounded-lg bg-accent-deep text-white text-xs font-bold hover:bg-accent-hover"
+              >
+                حفظ التفاصيل
+              </button>
+              {saved && <span className="text-emerald-700 text-xs font-bold">✓ اتحفظت</span>}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div className="relative">
+    <div>
       <button
-        onClick={() => {
-          setVal(lead.note ?? "");
-          setOpen(!open);
-        }}
-        title="ملاحظة"
-        className={`p-2 rounded-lg ${
-          hasNote ? "text-amber-600 bg-amber-50" : "text-slate-400 hover:bg-slate-100"
+        onClick={onToggle}
+        className={`flex items-center gap-2 text-xs font-bold px-3 py-2 rounded-lg transition-colors ${
+          lead.note ? "bg-amber-50 text-amber-700" : "bg-surface-2 text-slate-500 hover:text-slate-600"
         }`}
       >
-        <StickyNote size={14} />
+        <StickyNote size={13} />
+        {lead.note ? (
+          <span className="max-w-96 truncate text-start">📝 {lead.note}</span>
+        ) : (
+          "أضف تفاصيل"
+        )}
+        <span>{open ? "▲" : "▼"}</span>
       </button>
       {open && (
-        <div className="absolute z-30 top-full mt-1 end-0 w-72 bg-white rounded-xl border border-slate-200 shadow-xl p-3">
+        <div className="mt-2 flex gap-2 items-start">
           <textarea
             value={val}
             onChange={(e) => setVal(e.target.value)}
-            placeholder="تفاصيل المكالمة... مثال: اتفقنا على 4 مليون — بيرد السبت"
+            placeholder="تفاصيل المكالمة كاملة: اتفقنا على كام؟ إمتى بيرد؟ أي ملاحظات مهمة..."
             rows={3}
-            autoFocus
-            className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30 focus:border-[#1e3a8a]"
+            className="flex-1 px-3 py-2.5 rounded-xl border border-slate-300 bg-surface-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent placeholder:text-slate-400"
           />
-          <div className="flex gap-2 mt-2">
-            <button
-              onClick={() => {
-                onSave(val.trim());
-                setOpen(false);
-              }}
-              className="flex-1 py-2 rounded-lg bg-[#1e3a8a] text-white text-xs font-bold hover:bg-[#172554]"
-            >
-              حفظ
-            </button>
-            <button
-              onClick={() => setOpen(false)}
-              className="px-3 py-2 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold"
-            >
-              إلغاء
-            </button>
-          </div>
+          <button
+            onClick={save}
+            className="px-4 py-2.5 rounded-xl bg-accent-deep text-white text-xs font-bold hover:bg-accent-hover shrink-0"
+          >
+            حفظ
+          </button>
+          {saved && <span className="text-emerald-700 text-xs font-bold self-center">✓ اتحفظت</span>}
         </div>
       )}
     </div>
@@ -439,7 +505,7 @@ function NoteButton({ lead, onSave }: { lead: Lead; onSave: (note: string) => vo
 
 function Lock() {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7aa5f8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>

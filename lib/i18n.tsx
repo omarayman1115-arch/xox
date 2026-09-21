@@ -8,7 +8,7 @@ export type Lang = "ar" | "en";
 const translations = {
   ar: {
     appName: "xox",
-    tagline: "أول عقار بيك... على طول",
+    tagline: "شقق، فيلات، ومحلات تجارية للبيع والإيجار في كل مصر",
     home: "الرئيسية",
     allProperties: "كل العقارات",
     favorites: "المفضلة",
@@ -66,8 +66,10 @@ const translations = {
     favEmpty: "مفيش عقارات في المفضلة",
     favEmptyHint: "دوس على القلب في أي عقار عشان تضيفه هنا",
     browseProperties: "تصفح العقارات",
-    heroTitle: "عقارك اللي بتحلم بيه موجود هنا",
-    heroSubtitle: "بيع، إيجار، أو استثمار — كل حاجة في مكان واحد",
+    heroTitle: "عقارات للبيع والإيجار في مصر",
+    heroSubtitle: "شقق، فيلات، محلات، وشاليهات — كل محافظات مصر",
+    browseByType: "تصفح بالنوع",
+    allTypeShort: "الكل",
     exploreBtn: "اكتشف العقارات",
     sellBtn: "اعرض عقارك",
     statsProperties: "عقار معروض",
@@ -101,6 +103,12 @@ const translations = {
     images: "الصور",
     dropImages: "اسحب الصور هنا أو دوس للاختيار",
     mainImage: "الصورة الرئيسية",
+    video: "فيديو العقار (اختياري)",
+    videoPh: "رابط مباشر mp4 أو أي رابط فيديو",
+    uploadVideo: "رفع ملف فيديو",
+    videoTooBig: "الفيديو كبير — الحد الأقصى 50 ميجا",
+    negotiable: "السعر قابل للتفاوض",
+    negotiableBadge: "قابل للتفاوض",
     removeImage: "إزالة",
     selectFeature: "اختر المميزات",
     publish: "نشر الإعلان",
@@ -113,7 +121,7 @@ const translations = {
     loading: "جاري التحميل...",
     phone: "رقم الهاتف",
     copyright: "جميع الحقوق محفوظة",
-    madeWithLove: "اتعمل بحب في مصر",
+    madeWithLove: "منصة عقارية مصرية",
     quickLinks: "روابط سريعة",
     reachUs: "كلمنا",
     whatsappNumber: "واتساب",
@@ -201,8 +209,10 @@ const translations = {
     favEmpty: "No favorites yet",
     favEmptyHint: "Tap the heart on any property to save it here",
     browseProperties: "Browse Properties",
-    heroTitle: "The home you dream of is here",
-    heroSubtitle: "Buy, rent, or invest — all in one place",
+    heroTitle: "Real Estate for Sale and Rent in Egypt",
+    heroSubtitle: "Apartments, villas, shops, and chalets — across Egypt",
+    browseByType: "Browse by type",
+    allTypeShort: "All",
     exploreBtn: "Explore Properties",
     sellBtn: "List Your Property",
     statsProperties: "Listed Properties",
@@ -236,6 +246,12 @@ const translations = {
     images: "Images",
     dropImages: "Drag images here or click to browse",
     mainImage: "Main image",
+    video: "Property video (optional)",
+    videoPh: "Direct mp4 link or any video URL",
+    uploadVideo: "Upload video file",
+    videoTooBig: "Video too large — max 50 MB",
+    negotiable: "Price negotiable",
+    negotiableBadge: "Negotiable",
     removeImage: "Remove",
     selectFeature: "Select features",
     publish: "Publish listing",
@@ -248,7 +264,7 @@ const translations = {
     loading: "Loading...",
     phone: "Phone number",
     copyright: "All rights reserved",
-    madeWithLove: "Made with love in Egypt",
+    madeWithLove: "An Egyptian real estate platform",
     quickLinks: "Quick Links",
     reachUs: "Reach Us",
     whatsappNumber: "WhatsApp",
@@ -325,4 +341,24 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
 
 export function useLang() {
   return useContext(LangContext);
+}
+
+/* ترجمة أنواع العقارات للعرض — القيم في الداتابيز بتفضل عربي */
+const PROPERTY_TYPE_EN: Record<string, string> = {
+  "شقة": "Apartment",
+  "فيلا": "Villa",
+  "دوبلكس": "Duplex",
+  "رووف": "Roof",
+  "ستوديو": "Studio",
+  "شاليه": "Chalet",
+  "محل تجاري": "Shop",
+  "مكتب إداري": "Office",
+  "أرض": "Land",
+  "مبنى كامل": "Building",
+  "مصنع / مخزن": "Factory / Warehouse",
+};
+
+export function usePropertyTypeLabel() {
+  const { lang } = useLang();
+  return (pt: string) => (lang === "en" ? PROPERTY_TYPE_EN[pt] ?? pt : pt);
 }

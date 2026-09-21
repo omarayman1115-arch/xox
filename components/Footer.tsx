@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Phone, MessageCircle } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 
@@ -9,8 +8,8 @@ export default function Footer() {
   const wa = "https://wa.me/201556956343";
 
   return (
-    <footer className="bg-[#172554] text-slate-300 mt-16">
-      <div className="max-w-7xl mx-auto px-4 py-10 grid gap-8 md:grid-cols-3">
+    <footer className="bg-surface border-t border-slate-200 text-slate-400 mt-16">
+      <div className="max-w-7xl mx-auto px-4 py-10 grid gap-8 md:grid-cols-2">
         {/* عن الموقع */}
         <div>
           <div className="flex items-center gap-2 mb-3">
@@ -19,30 +18,8 @@ export default function Footer() {
             </span>
           </div>
           <p className="text-sm leading-relaxed text-slate-400">
-            {t("heroSubtitle")} — {t("madeWithLove")} 💙
+            {t("madeWithLove")} — {t("heroSubtitle")}
           </p>
-        </div>
-
-        {/* روابط سريعة */}
-        <div>
-          <h3 className="font-bold text-white mb-3">{t("quickLinks")}</h3>
-          <ul className="space-y-2 text-sm">
-            <li>
-              <Link href="/" className="hover:text-white transition-colors">
-                {t("allProperties")}
-              </Link>
-            </li>
-            <li>
-              <Link href="/?fav=1" className="hover:text-white transition-colors">
-                {t("favorites")}
-              </Link>
-            </li>
-            <li>
-              <Link href="/admin" className="hover:text-white transition-colors">
-                {t("dashboard")}
-              </Link>
-            </li>
-          </ul>
         </div>
 
         {/* التواصل */}
