@@ -6,6 +6,7 @@ import { X, UploadCloud, Star, ArrowLeft, Loader2, Video } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import Select from "@/components/ui/Select";
 import { adminFetch } from "@/lib/adminFetch";
+import { videoKind } from "@/lib/format";
 import type { Property, ListingType, RentPeriod } from "@/lib/types";
 import { GOVERNORATES, getCities, getDistricts, PROPERTY_TYPES, FEATURES } from "@/lib/egypt";
 
@@ -455,13 +456,31 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
               {t("uploadVideo")}
             </button>
           </div>
-          {form.video && (
-            <video
-              src={form.video}
-              controls
-              className="mt-3 w-full max-w-sm rounded-xl border border-slate-200"
-            />
-          )}
+          {(() => {
+            if (!form.video) return null;
+            const k = videoKind(form.video);
+            if (k === "file")
+              return (
+                <video
+                  src={form.video}
+                  controls
+                  className="mt-3 w-full max-w-sm rounded-xl border border-slate-200"
+                />
+              );
+            if (k && k !== "link")
+              return (
+                <p className="mt-2 text-xs font-bold text-emerald-700 flex items-center gap-1.5">
+                  <Video size={13} />
+                  لينك منصة مكتشف — هيشتغل جوه صفحة العقار تلقائيًا ✓
+                </p>
+              );
+            return (
+              <p className="mt-2 text-xs font-bold text-amber-700 flex items-center gap-1.5">
+                <Video size={13} />
+                رابط خارجي — هيظهر كزرار يفتح في تاب جديد
+              </p>
+            );
+          })()}
         </div>
 
         {/* رقم التواصل */}

@@ -6,7 +6,7 @@ import { X, Heart, BedDouble, Bath, Ruler, MapPin, Check, MessageCircle, Phone, 
 import type { Property } from "@/lib/types";
 import { useLang } from "@/lib/i18n";
 import { useFav } from "./FavoritesProvider";
-import { formatPrice, formatDate, whatsappLink, safeImages } from "@/lib/format";
+import { formatPrice, formatDate, whatsappLink, safeImages, videoKind, videoEmbedUrl, videoPlatformName } from "@/lib/format";
 import LeadModal from "./LeadModal";
 
 interface Props {
@@ -131,6 +131,10 @@ export default function PropertyModal({ property: p, onClose, allProperties, onO
   const phone = p.contact_phone || "01556956343";
   const wa = whatsappLink(phone, p);
 
+  // نوع الفيديو: ملف مباشر يتشغل جوه الموقع، أو منصة تتشغل بـ embed، أو لينك عادي
+  const vKind = videoKind(p.video);
+  const vEmbed = vKind && p.video ? videoEmbedUrl(p.video, vKind) : null;
+
   return (
     <div
       className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center"
@@ -233,8 +237,8 @@ export default function PropertyModal({ property: p, onClose, allProperties, onO
             )}
           </div>
 
-          {/* مشغل الفيديو — تحت الصور لو فيه فيديو */}
-          {p.video && (
+          {/* الفيديو — ملف مباشر يتشغل جوه الموقع، أو منصة (تيك توك/يوتيوب/انستجرام/فيسبوك) بمشغّلها المدمج */}
+          {vKind === "file" && p.video && (
             <div className="px-4 pt-3">
               <video
                 src={p.video}
@@ -243,6 +247,39 @@ export default function PropertyModal({ property: p, onClose, allProperties, onO
                 playsInline
                 className="w-full rounded-xl border border-slate-200 bg-black"
               />
+            </div>
+          )}
+          {vKind && vKind !== "file" && vKind !== "link" && vEmbed && (
+            <div className="px-4 pt-3">
+              {/* يوتيوب وفيسبوك عريضة — تيك توك وانستجرام طولية زي موبايل */}
+              <iframe
+                src={vEmbed}
+                title={p.title}
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+                className={
+                  vKind === "youtube" || vKind === "facebook"
+                    ? "w-full aspect-video rounded-xl border border-slate-200 bg-black"
+                    : "w-full max-w-[340px] mx-auto block aspect-[9/16] rounded-xl border border-slate-200 bg-black"
+                }
+              />
+            </div>
+          )}
+          {p.video && (vKind === "link" || (vKind && vKind !== "file" && !vEmbed)) && (
+            <div className="px-4 pt-3">
+              <a
+                href={p.video}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-surface-2 font-bold text-sm transition-colors"
+              >
+                <Video size={17} className="text-accent" />
+                {lang === "ar"
+                  ? `شاهد الفيديو${vKind && vKind !== "link" ? ` على ${videoPlatformName(vKind, "ar")}` : ""}`
+                  : `Watch video${vKind && vKind !== "link" ? ` on ${videoPlatformName(vKind, "en")}` : ""}`}
+              </a>
             </div>
           )}
 
