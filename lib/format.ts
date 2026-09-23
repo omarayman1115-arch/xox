@@ -85,12 +85,17 @@ export function videoEmbedUrl(url: string, kind: VideoKind): string | null {
       const id = youtubeId(url);
       return id ? `https://www.youtube.com/embed/${id}?rel=0` : null;
     }
-    case "tiktok":
+    case "tiktok": {
       // TikTok embed الرسمي — بيشتغل مع لينكات /video/ و /v/
-      return `https://www.tiktok.com/embed/v2/${url.match(/\/(?:video|v)\/(\d+)/)?.[1] ?? ""}`;
+      // لينكات vm.tiktok.com المختصرة معندهاش ID — نرجّع null فيظهر زرار بدل iframe مكسور
+      const ttId = url.match(/\/(?:video|v)\/(\d+)/)?.[1];
+      return ttId ? `https://www.tiktok.com/embed/v2/${ttId}` : null;
+    }
     case "instagram":
       return `${url.replace(/\?[^?]*$/, "")}/embed`;
     case "facebook":
+      // fb.watch المختصرة مش بتشتغل مع بلوجن فيسبوك — نرجّع null فيظهر زرار
+      if (/fb\.watch/.test(url)) return null;
       return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`;
     default:
       return null;
