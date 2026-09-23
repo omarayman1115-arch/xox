@@ -28,6 +28,7 @@ export default function AdminPage() {
   const [pwd, setPwd] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loggingIn, setLoggingIn] = useState(false);
 
   const load = useCallback(async () => {
     const res = await adminFetch("/api/admin/properties");
@@ -51,19 +52,35 @@ export default function AdminPage() {
   async function login(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    const res = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: pwd }),
-    });
-    if (res.ok) {
-      // طبّق جلسة Supabase لو السيرفر رجّعها — عشان الـ Bearer في كل النداءات الجاية
-      const data = await res.json().catch(() => ({}));
-      if (data.session) await applyAdminSession(data.session);
-      setPwd("");
-      load();
-    } else {
-      setError(t("wrongPassword"));
+    setLoggingIn(true);
+    try {
+      // مهلة 15 ثانية — عشان الزرار ميفضلش معلّق لو الاتصال وقع
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pwd }),
+        signal:
+          typeof AbortSignal !== "undefined" && AbortSignal.timeout
+            ? AbortSignal.timeout(15000)
+            : undefined,
+      });
+      if (res.ok) {
+        // طبّق جلسة Supabase لو السيرفر رجّعها — عشان الـ Bearer في كل النداءات الجاية
+        const data = await res.json().catch(() => ({}));
+        if (data.session) await applyAdminSession(data.session);
+        setPwd("");
+        await load();
+      } else {
+        setError(t("wrongPassword"));
+      }
+    } catch {
+      setError(
+        lang === "ar"
+          ? "تعذّر الاتصال بالسيرفر — اتأكد من الإنترنت وجرّب تاني"
+          : "Could not reach the server — check your connection and try again"
+      );
+    } finally {
+      setLoggingIn(false);
     }
   }
 
@@ -118,9 +135,10 @@ export default function AdminPage() {
             {error && <p className="text-rose-600 text-sm font-semibold">{error}</p>}
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-accent-deep text-white font-bold hover:bg-accent-hover transition-colors active:scale-[0.98]"
+              disabled={loggingIn}
+              className="w-full py-3 rounded-xl bg-accent-deep text-white font-bold hover:bg-accent-hover transition-colors active:scale-[0.98] disabled:opacity-60"
             >
-              {t("loginBtn")}
+              {loggingIn ? (lang === "ar" ? "جاري الدخول..." : "Signing in...") : t("loginBtn")}
             </button>
           </form>
         </div>
