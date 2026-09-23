@@ -12,13 +12,15 @@ import {
   Building2,
   Eye,
   EyeOff,
+  Users,
+  CalendarCheck,
+  TrendingUp,
 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import type { Property } from "@/lib/types";
 import { formatPrice, coverImage } from "@/lib/format";
 import { adminFetch, applyAdminSession } from "@/lib/adminFetch";
 import PropertyForm from "@/components/admin/PropertyForm";
-import { Users } from "lucide-react";
 
 export default function AdminPage() {
   const { t, lang } = useLang();
@@ -29,6 +31,7 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
+  const [leadStats, setLeadStats] = useState<{ today: number; week: number; contacted: number; total: number } | null>(null);
 
   const load = useCallback(async () => {
     const res = await adminFetch("/api/admin/properties");
@@ -48,6 +51,15 @@ export default function AdminPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // إحصائيات العملاء — تجيبها مرة بعد الدخول
+  useEffect(() => {
+    if (authed !== true) return;
+    adminFetch("/api/admin/leads/stats")
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setLeadStats)
+      .catch(() => {});
+  }, [authed]);
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
@@ -162,6 +174,26 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* إحصائيات العملاء */}
+      {leadStats && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          {[
+            { icon: Users, label: t("todayLeads"), value: leadStats.today, cls: "bg-blue-50 text-blue-700" },
+            { icon: CalendarCheck, label: t("weekLeads"), value: leadStats.week, cls: "bg-violet-50 text-violet-700" },
+            { icon: TrendingUp, label: t("contactRate"), value: `${leadStats.total ? Math.round((leadStats.contacted / leadStats.total) * 100) : 0}%`, cls: "bg-emerald-50 text-emerald-700" },
+            { icon: Building2, label: t("totalLeads"), value: leadStats.total, cls: "bg-amber-50 text-amber-700" },
+          ].map(({ icon: Icon, label, value, cls }) => (
+            <div key={label} className="bg-surface rounded-2xl border border-slate-200 p-4">
+              <div className={`w-9 h-9 rounded-xl ${cls} flex items-center justify-center mb-2`}>
+                <Icon size={17} />
+              </div>
+              <p className="text-2xl font-extrabold text-slate-800">{value}</p>
+              <p className="text-xs font-bold text-slate-400 mt-0.5">{label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <h1 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
           <Building2 className="text-accent" />

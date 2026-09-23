@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, Fragment } from "react";
+import { useEffect, useMemo, useState, Fragment, useRef } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -24,6 +24,7 @@ interface Lead {
   phone_number: string;
   status: "contacted" | "not_contacted";
   note?: string;
+  follow_up?: string | null;
   created_at: string;
 }
 
@@ -48,6 +49,10 @@ export default function LeadsPage() {
   const [filter, setFilter] = useState<"all" | "contacted" | "not_contacted">("all");
   // العميل اللي خانة تفاصيله مفتوحة — واحدة بس في نفس الوقت
   const [expanded, setExpanded] = useState<string | null>(null);
+  // تنبيه العميل الجديد: أعرف آخر عميل شفته + صوت + إشعار
+  const [newLeadToast, setNewLeadToast] = useState<string | null>(null);
+  const lastSeenIdRef = useRef<string | null>(null);
+  const firstLoadRef = useRef(true);
 
   const load = async () => {
     setLoading(true);
@@ -70,6 +75,53 @@ export default function LeadsPage() {
 
   useEffect(() => {
     load();
+  }, []);
+
+  /* ---------- تنبيه العميل الجديد: بولينج كل 30 ثانية ---------- */
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const res = await adminFetch("/api/admin/leads");
+        if (!res.ok) return;
+        const rows: Lead[] = await res.json();
+        const newest = rows[0];
+        if (!newest) return;
+        if (lastSeenIdRef.current === null) {
+          // أول تحميل — سجل بس من غير تنبيه
+          lastSeenIdRef.current = newest.id;
+          return;
+        }
+        if (newest.id !== lastSeenIdRef.current) {
+          lastSeenIdRef.current = newest.id;
+          setLeads(rows);
+          setNewLeadToast(newest.customer_name);
+          // صوت تنبيه خفيف (نغمة قصيرة متولدة — مفيش ملفات صوت)
+          try {
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 880;
+            gain.gain.value = 0.04;
+            osc.start();
+            osc.stop(ctx.currentTime + 0.15);
+            setTimeout(() => ctx.close(), 400);
+          } catch {}
+          // إشعار المتصفح — بس لو مسموح
+          try {
+            if ("Notification" in window && Notification.permission === "granted") {
+              new Notification(t("newLeadToast"), { body: `${newest.customer_name} — ${newest.phone_number}` });
+            }
+          } catch {}
+          setTimeout(() => setNewLeadToast(null), 8000);
+        } else {
+          setLeads(rows);
+        }
+      } catch {}
+    };
+    const id = setInterval(check, 30000);
+    return () => clearInterval(id);
   }, []);
 
   async function toggleStatus(lead: Lead) {
@@ -106,6 +158,34 @@ export default function LeadsPage() {
       setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, note: prev } : l)));
       setError(hint);
     }
+  }
+
+  /** حفظ موعد المتابعة */
+  async function saveFollowUp(lead: Lead, follow_up: string | null) {
+    const prev = lead.follow_up ?? null;
+    setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, follow_up } : l)));
+    const res = await adminFetch("/api/admin/leads", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: lead.id, follow_up }),
+    });
+    if (!res.ok) {
+      setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, follow_up: prev } : l)));
+      setError("موعد المتابعة ما اتحفظش — نفّذ supabase/follow-up.sql الأول");
+    }
+  }
+
+  /** حالة المتابعة: متأخر / النهاردة / قريب */
+  function followUpState(d: string | null | undefined): "overdue" | "today" | "soon" | null {
+    if (!d) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(d + "T00:00:00");
+    const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
+    if (diff < 0) return "overdue";
+    if (diff === 0) return "today";
+    if (diff <= 2) return "soon";
+    return null;
   }
 
   async function remove(id: string) {
@@ -151,6 +231,17 @@ export default function LeadsPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* تنبيه عميل جديد — يظهر فوق وبيختفي لوحده */}
+      {newLeadToast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed top-4 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 z-[90] flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-500 text-white font-extrabold shadow-2xl animate-bounce"
+        >
+          🔔 {t("newLeadToast")} — {newLeadToast}
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <h1 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
           <Users className="text-accent" />
@@ -250,7 +341,21 @@ export default function LeadsPage() {
                 {filtered.map((l) => (
                   <Fragment key={l.id}>
                   <tr className="hover:bg-surface-2/60">
-                    <td className="px-4 py-3 font-bold text-slate-700">{l.customer_name}</td>
+                    <td className="px-4 py-3 font-bold text-slate-700">
+                      <span className="flex items-center gap-2">
+                        {l.customer_name}
+                        {followUpState(l.follow_up) === "overdue" && (
+                          <span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 text-[10px] font-extrabold whitespace-nowrap">
+                            ⏰ {t("followUpOverdue")}
+                          </span>
+                        )}
+                        {followUpState(l.follow_up) === "today" && (
+                          <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[10px] font-extrabold whitespace-nowrap">
+                            📅 {t("followUpToday")}
+                          </span>
+                        )}
+                      </span>
+                    </td>
                     <td className="px-4 py-3" dir="ltr">
                       <a
                         href={`tel:+${l.phone_number.startsWith("0") ? "2" + l.phone_number : l.phone_number}`}
@@ -317,6 +422,7 @@ export default function LeadsPage() {
                         open={expanded === l.id}
                         onToggle={() => setExpanded(expanded === l.id ? null : l.id)}
                         onSave={(n) => saveNote(l, n)}
+                        onFollowUp={(d) => saveFollowUp(l, d)}
                       />
                     </td>
                   </tr>
@@ -332,7 +438,19 @@ export default function LeadsPage() {
               <div key={l.id} className="bg-surface rounded-2xl border border-slate-200 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-extrabold text-slate-800">{l.customer_name}</p>
+                    <p className="font-extrabold text-slate-800">
+                      {l.customer_name}
+                      {followUpState(l.follow_up) === "overdue" && (
+                        <span className="ms-2 px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 text-[10px] font-extrabold">
+                          ⏰ {t("followUpOverdue")}
+                        </span>
+                      )}
+                      {followUpState(l.follow_up) === "today" && (
+                        <span className="ms-2 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[10px] font-extrabold">
+                          📅 {t("followUpToday")}
+                        </span>
+                      )}
+                    </p>
                     <a
                       href={`tel:+${l.phone_number.startsWith("0") ? "2" + l.phone_number : l.phone_number}`}
                       className="text-accent font-bold text-sm mt-0.5 block"
@@ -386,6 +504,7 @@ export default function LeadsPage() {
                   open={expanded === l.id}
                   onToggle={() => setExpanded(expanded === l.id ? null : l.id)}
                   onSave={(n) => saveNote(l, n)}
+                  onFollowUp={(d) => saveFollowUp(l, d)}
                   mobile
                 />
               </div>
@@ -406,12 +525,14 @@ function LeadDetailRow({
   open,
   onToggle,
   onSave,
+  onFollowUp,
   mobile = false,
 }: {
   lead: Lead;
   open: boolean;
   onToggle: () => void;
   onSave: (note: string) => void;
+  onFollowUp: (d: string | null) => void;
   mobile?: boolean;
 }) {
   const [val, setVal] = useState(lead.note ?? "");
@@ -459,6 +580,7 @@ function LeadDetailRow({
               </button>
               {saved && <span className="text-emerald-700 text-xs font-bold">✓ اتحفظت</span>}
             </div>
+            <FollowUpPicker lead={lead} onSave={onFollowUp} />
           </div>
         )}
       </div>
@@ -499,6 +621,55 @@ function LeadDetailRow({
           {saved && <span className="text-emerald-700 text-xs font-bold self-center">✓ اتحفظت</span>}
         </div>
       )}
+      {open && <FollowUpPicker lead={lead} onSave={onFollowUp} />}
+    </div>
+  );
+}
+
+/** حقل موعد المتابعة — تاريخ + حفظ فوري + مسح */
+function FollowUpPicker({
+  lead,
+  onSave,
+}: {
+  lead: Lead;
+  onSave: (d: string | null) => void;
+}) {
+  const { t } = useLang();
+  const [val, setVal] = useState(lead.follow_up ?? "");
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setVal(lead.follow_up ?? "");
+  }, [lead.follow_up]);
+
+  return (
+    <div className="flex items-center gap-2 mt-2">
+      <label className="text-xs font-bold text-slate-500 whitespace-nowrap">
+        ⏰ {t("followUpDate")}
+      </label>
+      <input
+        type="date"
+        value={val}
+        onChange={(e) => {
+          setVal(e.target.value);
+          onSave(e.target.value || null);
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        }}
+        className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-surface-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+      />
+      {val && (
+        <button
+          onClick={() => {
+            setVal("");
+            onSave(null);
+          }}
+          className="text-xs font-bold text-rose-600 hover:underline"
+        >
+          مسح
+        </button>
+      )}
+      {saved && <span className="text-emerald-700 text-xs font-bold">✓</span>}
     </div>
   );
 }

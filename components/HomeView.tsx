@@ -183,7 +183,17 @@ function HomeInner() {
         )}
       </div>
 
-      {selected && <PropertyModal property={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <PropertyModal
+          property={selected}
+          onClose={() => setSelected(null)}
+          allProperties={properties}
+          onOpenProperty={(p) => {
+            setSelected(null);
+            setTimeout(() => setSelected(p), 50);
+          }}
+        />
+      )}
     </div>
   );
 }
