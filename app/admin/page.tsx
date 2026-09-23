@@ -230,11 +230,11 @@ export default function AdminPage() {
         <table className="w-full text-sm">
           <thead className="bg-surface-2 text-slate-500">
             <tr>
-              <th className="text-start px-4 py-3 font-bold">العقار</th>
+              <th className="text-start px-4 py-3 font-bold">{t("colProperty2")}</th>
               <th className="text-start px-4 py-3 font-bold">{t("price")}</th>
               <th className="text-start px-4 py-3 font-bold">{t("listingType")}</th>
               <th className="text-start px-4 py-3 font-bold">{t("location")}</th>
-              <th className="text-start px-4 py-3 font-bold">الحالة</th>
+              <th className="text-start px-4 py-3 font-bold">{t("statusCol")}</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -277,7 +277,7 @@ export default function AdminPage() {
                     }`}
                   >
                     {p.is_published ? <Eye size={13} /> : <EyeOff size={13} />}
-                    {p.is_published ? "منشور" : "مسودة"}
+                    {p.is_published ? t("published") : t("draftShort")}
                   </button>
                 </td>
                 <td className="px-4 py-3">

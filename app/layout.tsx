@@ -4,6 +4,7 @@ import "./globals.css";
 import { LangProvider } from "@/lib/i18n";
 import { FavoritesProvider } from "@/components/FavoritesProvider";
 import Header from "@/components/Header";
+import SkipLink from "@/components/SkipLink";
 import Footer from "@/components/Footer";
 
 const cairo = Cairo({
@@ -144,9 +145,7 @@ export default function RootLayout({
         <LangProvider>
           <FavoritesProvider>
             <SiteJsonLd />
-            <a href="#main" className="skip-link">
-              تخطي إلى المحتوى
-            </a>
+            <SkipLink />
             <Header />
             <main id="main" className="flex-1">{children}</main>
             <Footer />

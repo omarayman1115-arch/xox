@@ -64,7 +64,7 @@ export default function LeadsPage() {
       return;
     }
     if (!res.ok) {
-      setError("حصلت مشكلة في تحميل العملاء — اتأكد من الاتصال وقولي تاني");
+      setError(t("loadFailed"));
       setLoading(false);
       return;
     }
@@ -136,7 +136,7 @@ export default function LeadsPage() {
     if (!res.ok) {
       // رجّع الحالة القديمة لو فشل الحفظ
       setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, status: lead.status } : l)));
-      setError("التحديث ما اتحفظش — جرب تاني");
+      setError(t("updateFailed"));
     }
   }
 
@@ -150,10 +150,10 @@ export default function LeadsPage() {
       body: JSON.stringify({ id: lead.id, note }),
     });
     if (!res.ok) {
-      let hint = "الملاحظة ما اتحفظتش — جرب تاني";
+      let hint = t("noteFailed");
       try {
         const j = await res.json();
-        if (j?.error === "note_column_missing") hint = "نفّذ supabase/leads-note.sql في SQL Editor الأول";
+        if (j?.error === "note_column_missing") hint = t("runNoteSql");
       } catch {}
       setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, note: prev } : l)));
       setError(hint);
@@ -171,7 +171,7 @@ export default function LeadsPage() {
     });
     if (!res.ok) {
       setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, follow_up: prev } : l)));
-      setError("موعد المتابعة ما اتحفظش — نفّذ supabase/follow-up.sql الأول");
+      setError(t("followUpFailed"));
     }
   }
 
@@ -189,7 +189,7 @@ export default function LeadsPage() {
   }
 
   async function remove(id: string) {
-    if (!confirm("متأكد من حذف العميل ده؟")) return;
+    if (!confirm(t("confirmDeleteLead"))) return;
     setLeads((ls) => ls.filter((l) => l.id !== id));
     await adminFetch(`/api/admin/leads?id=${id}`, { method: "DELETE" });
   }
@@ -245,7 +245,7 @@ export default function LeadsPage() {
       <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <h1 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
           <Users className="text-accent" />
-          العملاء المهتمين
+          {t("leads")}
           <span className="text-sm font-bold text-slate-400">({counts.all})</span>
         </h1>
         <div className="flex items-center gap-2">
@@ -254,14 +254,14 @@ export default function LeadsPage() {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-sm hover:bg-surface-2"
           >
             <RefreshCw size={15} />
-            تحديث
+            {t("refresh")}
           </button>
           <Link
             href="/admin"
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-sm hover:bg-surface-2"
           >
             <Building2 size={15} />
-            العقارات
+            {t("propertiesPage")}
           </Link>
           <button
             onClick={async () => {
@@ -282,9 +282,9 @@ export default function LeadsPage() {
       <div className="flex flex-wrap gap-2 mb-4">
         {(
           [
-            ["all", `الكل (${counts.all})`],
-            ["not_contacted", `لم يتم التواصل (${counts.not_contacted})`],
-            ["contacted", `تم التواصل (${counts.contacted})`],
+            ["all", `${t("filterAll")} (${counts.all})`],
+            ["not_contacted", `${t("filterNotContacted")} (${counts.not_contacted})`],
+            ["contacted", `${t("filterContacted")} (${counts.contacted})`],
           ] as const
         ).map(([v, label]) => (
           <button
@@ -317,10 +317,8 @@ export default function LeadsPage() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 bg-surface rounded-2xl border border-slate-200">
           <p className="text-4xl mb-3">📞</p>
-          <p className="font-bold text-slate-600">مفيش عملاء لسه</p>
-          <p className="text-sm text-slate-400 mt-1">
-            أول ما حد يدوس "تواصل واتساب" في صفحة عقار هيظهر هنا
-          </p>
+          <p className="font-bold text-slate-600">{t("noLeadsYet")}</p>
+          <p className="text-sm text-slate-400 mt-1">{t("noLeadsHint")}</p>
         </div>
       ) : (
         <>
@@ -329,11 +327,11 @@ export default function LeadsPage() {
             <table className="w-full text-sm">
               <thead className="bg-surface-2 text-slate-500">
                 <tr>
-                  <th className="text-start px-4 py-3 font-bold">العميل</th>
-                  <th className="text-start px-4 py-3 font-bold">رقم الموبايل</th>
-                  <th className="text-start px-4 py-3 font-bold">العقار</th>
-                  <th className="text-start px-4 py-3 font-bold">التاريخ</th>
-                  <th className="text-start px-4 py-3 font-bold">الحالة</th>
+                  <th className="text-start px-4 py-3 font-bold">{t("colClient")}</th>
+                  <th className="text-start px-4 py-3 font-bold">{t("colPhone")}</th>
+                  <th className="text-start px-4 py-3 font-bold">{t("colProperty")}</th>
+                  <th className="text-start px-4 py-3 font-bold">{t("colDate")}</th>
+                  <th className="text-start px-4 py-3 font-bold">{t("colStatus")}</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -372,7 +370,7 @@ export default function LeadsPage() {
                           className="hover:underline"
                           target="_blank"
                         >
-                          عرض العقار
+                          {t("viewProperty")}
                         </a>
                       ) : (
                         "—"
@@ -390,7 +388,7 @@ export default function LeadsPage() {
                           }`}
                         >
                           {l.status === "contacted" ? <Check size={13} /> : <Clock size={13} />}
-                          {l.status === "contacted" ? "تم التواصل" : "لم يتم التواصل"}
+                          {l.status === "contacted" ? t("statusContacted") : t("statusNotContacted")}
                         </button>
                       </div>
                     </td>
@@ -401,14 +399,14 @@ export default function LeadsPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-2 rounded-lg hover:bg-emerald-50 text-emerald-600"
-                          title="واتساب"
+                          title={t("whatsappTitle")}
                         >
                           💬
                         </a>
                         <button
                           onClick={() => remove(l.id)}
                           className="p-2 rounded-lg hover:bg-rose-50 text-rose-600"
-                          title="حذف"
+                          title={t("deleteTitle")}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -469,7 +467,7 @@ export default function LeadsPage() {
                       }`}
                     >
                       {l.status === "contacted" ? <Check size={13} /> : <Clock size={13} />}
-                      {l.status === "contacted" ? "تم التواصل" : "لم يتم"}
+                      {l.status === "contacted" ? t("statusContacted") : t("statusNotContactedShort")}
                     </button>
                   </div>
                 </div>
@@ -481,7 +479,7 @@ export default function LeadsPage() {
                     rel="noopener noreferrer"
                     className="flex-1 text-center py-2 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold"
                   >
-                    💬 واتساب
+                    💬 {t("whatsapp")}
                   </a>
                   {l.property_id && (
                     <a
@@ -489,7 +487,7 @@ export default function LeadsPage() {
                       target="_blank"
                       className="flex-1 text-center py-2 rounded-lg bg-surface-2 text-slate-600 text-xs font-bold"
                     >
-                      العقار
+                      {t("colProperty")}
                     </a>
                   )}
                   <button
@@ -535,6 +533,7 @@ function LeadDetailRow({
   onFollowUp: (d: string | null) => void;
   mobile?: boolean;
 }) {
+  const { t } = useLang();
   const [val, setVal] = useState(lead.note ?? "");
   const [saved, setSaved] = useState(false);
 
@@ -559,7 +558,7 @@ function LeadDetailRow({
           }`}
         >
           <StickyNote size={13} />
-          {lead.note ? "التفاصيل محفوظة — دوس للتعديل" : "أضف تفاصيل العميل"}
+          {lead.note ? t("detailsSaved") : t("addClientDetails")}
           <span className="ms-auto">{open ? "▲" : "▼"}</span>
         </button>
         {open && (
@@ -567,7 +566,7 @@ function LeadDetailRow({
             <textarea
               value={val}
               onChange={(e) => setVal(e.target.value)}
-              placeholder="تفاصيل المكالمة كاملة: اتفقنا على كام؟ إمتى بيرد؟ أي ملاحظات مهمة..."
+              placeholder={t("callDetailsPh")}
               rows={4}
               className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-surface-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent placeholder:text-slate-400"
             />
@@ -576,9 +575,9 @@ function LeadDetailRow({
                 onClick={save}
                 className="flex-1 py-2.5 rounded-lg bg-accent-deep text-white text-xs font-bold hover:bg-accent-hover"
               >
-                حفظ التفاصيل
+                {t("saveDetails")}
               </button>
-              {saved && <span className="text-emerald-700 text-xs font-bold">✓ اتحفظت</span>}
+              {saved && <span className="text-emerald-700 text-xs font-bold">{t("savedCheck")}</span>}
             </div>
             <FollowUpPicker lead={lead} onSave={onFollowUp} />
           </div>
@@ -599,7 +598,7 @@ function LeadDetailRow({
         {lead.note ? (
           <span className="max-w-96 truncate text-start">📝 {lead.note}</span>
         ) : (
-          "أضف تفاصيل"
+          t("addDetails")
         )}
         <span>{open ? "▲" : "▼"}</span>
       </button>
@@ -608,7 +607,7 @@ function LeadDetailRow({
           <textarea
             value={val}
             onChange={(e) => setVal(e.target.value)}
-            placeholder="تفاصيل المكالمة كاملة: اتفقنا على كام؟ إمتى بيرد؟ أي ملاحظات مهمة..."
+            placeholder={t("callDetailsPh")}
             rows={3}
             className="flex-1 px-3 py-2.5 rounded-xl border border-slate-300 bg-surface-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent placeholder:text-slate-400"
           />
@@ -617,8 +616,7 @@ function LeadDetailRow({
             className="px-4 py-2.5 rounded-xl bg-accent-deep text-white text-xs font-bold hover:bg-accent-hover shrink-0"
           >
             حفظ
-          </button>
-          {saved && <span className="text-emerald-700 text-xs font-bold self-center">✓ اتحفظت</span>}
+          </button>            {saved && <span className="text-emerald-700 text-xs font-bold self-center">{t("savedCheck")}</span>}
         </div>
       )}
       {open && <FollowUpPicker lead={lead} onSave={onFollowUp} />}
@@ -666,7 +664,7 @@ function FollowUpPicker({
           }}
           className="text-xs font-bold text-rose-600 hover:underline"
         >
-          مسح
+          {t("clearBtn")}
         </button>
       )}
       {saved && <span className="text-emerald-700 text-xs font-bold">✓</span>}

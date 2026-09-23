@@ -17,7 +17,7 @@ interface Props {
 }
 
 export default function PropertyForm({ initial, onDone, onCancel }: Props) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -109,7 +109,7 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
       });
     } catch {
       setBusy(false);
-      alert("تعذّر الاتصال بالسيرفر — اتأكد إن الاتصال شغال وجرّب تاني");
+      alert(lang === "ar" ? "تعذّر الاتصال بالسيرفر — اتأكد إن الاتصال شغال وجرّب تاني" : "Could not reach the server — check your connection and try again");
       return;
     }
     setBusy(false);
@@ -121,7 +121,7 @@ export default function PropertyForm({ initial, onDone, onCancel }: Props) {
       alert(initial ? t("updated") : t("added"));
       onDone();
     } else {
-      alert("حدث خطأ أثناء الحفظ — حاول تاني");
+      alert(lang === "ar" ? "حدث خطأ أثناء الحفظ — حاول تاني" : "An error occurred while saving — please try again");
     }
   }
 

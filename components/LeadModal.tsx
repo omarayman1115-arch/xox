@@ -19,7 +19,7 @@ interface Props {
  * ونعمل وسم للخطأ في الكونسول.
  */
 export default function LeadModal({ property, waUrl, onClose }: Props) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
@@ -42,8 +42,10 @@ export default function LeadModal({ property, waUrl, onClose }: Props) {
     setError("");
 
     const digits = phone.replace(/[^\d]/g, "");
-    if (name.trim().length < 2) return setError("اكتب اسمك من فضلك (حرفين على الأقل)");
-    if (digits.length < 8) return setError("اكتب رقم موبايل صحيح");
+    if (name.trim().length < 2)
+      return setError(lang === "ar" ? "اكتب اسمك من فضلك (حرفين على الأقل)" : "Please enter your name (at least 2 characters)");
+    if (digits.length < 8)
+      return setError(lang === "ar" ? "اكتب رقم موبايل صحيح" : "Please enter a valid phone number");
 
     setBusy(true);
     try {
@@ -58,14 +60,18 @@ export default function LeadModal({ property, waUrl, onClose }: Props) {
       });
       if (!res.ok && res.status !== 503) {
         // 503 = جدول الليدز لسه مش متعمل — منفتحش واتساب ونعرض الخطأ
-        setError("حصلت مشكلة في التسجيل — كلمنا مباشرة على 01556956343");
+        setError(
+          lang === "ar"
+            ? "حصلت مشكلة في التسجيل — كلمنا مباشرة على 01556956343"
+            : "Something went wrong — call us directly at 01556956343"
+        );
         setBusy(false);
         return;
       }
     } catch {
       // الشبكة وقعت — منمنعش العميل يكمل
       setBusy(false);
-      return setError("اتأكد من اتصالك بالإنترنت وجرب تاني");
+      return setError(lang === "ar" ? "اتأكد من اتصالك بالإنترنت وجرب تاني" : "Check your internet connection and try again");
     }
 
     // نجاح — نفتح واتساب
@@ -79,7 +85,7 @@ export default function LeadModal({ property, waUrl, onClose }: Props) {
       className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center"
       role="dialog"
       aria-modal="true"
-      aria-label="بيانات التواصل"
+      aria-label={lang === "ar" ? "بيانات التواصل" : "Contact details"}
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
@@ -107,7 +113,7 @@ export default function LeadModal({ property, waUrl, onClose }: Props) {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="مثال: أحمد محمد"
+              placeholder={lang === "ar" ? "مثال: أحمد محمد" : "e.g. Ahmed Mohamed"}
               className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-surface-2 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent text-sm"
               autoComplete="name"
               name="name"
@@ -145,7 +151,7 @@ export default function LeadModal({ property, waUrl, onClose }: Props) {
             className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold active:scale-[0.98] transition-transform disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {busy ? <Loader2 size={18} className="animate-spin" /> : <MessageCircle size={18} />}
-            {busy ? "لحظة…" : t("leadContinueWhatsapp")}
+            {busy ? (lang === "ar" ? "لحظة…" : "One moment…") : t("leadContinueWhatsapp")}
           </button>
         </form>
       </div>
