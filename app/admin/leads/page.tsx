@@ -12,6 +12,7 @@ import {
   Building2,
   RefreshCw,
   StickyNote,
+  Search,
 } from "lucide-react";
 import { useLang } from "@/lib/i18n";
 import { adminFetch } from "@/lib/adminFetch";
@@ -191,13 +192,26 @@ export default function LeadsPage() {
   async function remove(id: string) {
     if (!confirm(t("confirmDeleteLead"))) return;
     setLeads((ls) => ls.filter((l) => l.id !== id));
-    await adminFetch(`/api/admin/leads?id=${id}`, { method: "DELETE" });
+    const res = await adminFetch(`/api/admin/leads?id=${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      // الحذف فشل — نرجّع الوضع الحقيقي من القاعدة ونعرض رسالة واضحة
+      setError(t("deleteFailed"));
+      load();
+    }
   }
 
-  const filtered = useMemo(
-    () => (filter === "all" ? leads : leads.filter((l) => l.status === filter)),
-    [leads, filter]
-  );
+  const [q, setQ] = useState("");
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return leads
+      .filter((l) => filter === "all" || l.status === filter)
+      .filter(
+        (l) =>
+          !needle ||
+          l.customer_name.toLowerCase().includes(needle) ||
+          l.phone_number.includes(needle)
+      );
+  }, [leads, filter, q]);
 
   const counts = useMemo(
     () => ({
@@ -278,6 +292,19 @@ export default function LeadsPage() {
         </div>
       </div>
 
+      {/* شريط بحث العملاء — اسم أو رقم */}
+      <div className="relative mb-3 max-w-md">
+        <Search size={16} className="absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input
+          type="search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={t("searchLeadPh")}
+          aria-label={t("searchLeadPh")}
+          className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-slate-300 bg-surface text-sm font-bold text-slate-700 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+        />
+      </div>
+
       {/* فلاتر الحالة */}
       <div className="flex flex-wrap gap-2 mb-4">
         {(
@@ -316,9 +343,9 @@ export default function LeadsPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 bg-surface rounded-2xl border border-slate-200">
-          <p className="text-4xl mb-3">📞</p>
-          <p className="font-bold text-slate-600">{t("noLeadsYet")}</p>
-          <p className="text-sm text-slate-400 mt-1">{t("noLeadsHint")}</p>
+          <p className="text-4xl mb-3">{q ? "🔍" : "📞"}</p>
+          <p className="font-bold text-slate-600">{q ? t("searchNoResults") : t("noLeadsYet")}</p>
+          <p className="text-sm text-slate-400 mt-1">{q ? t("searchLeadPh") : t("noLeadsHint")}</p>
         </div>
       ) : (
         <>

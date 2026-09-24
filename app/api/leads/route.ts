@@ -40,6 +40,41 @@ export async function POST(req: Request) {
       status: "not_contacted",
     };
 
+    // منع التكرار: نفس رقم الموبايل = نفس العميل — نحدّث بياناته بدل صف جديد
+    // (بدل كده بيتسجل صفوف كتير بنفس الاسم والأدمن يمسح واحد ويلاقي الباقي موجود)
+    const existing = await supabase
+      .from("leads")
+      .select("id, customer_name")
+      .eq("phone_number", phone_digits)
+      .limit(1)
+      .maybeSingle();
+    if (!existing.error && existing.data?.id) {
+      const upd = await supabase
+        .from("leads")
+        .update({
+          customer_name,
+          property_id: body.property_id || null,
+          last_contact: new Date().toISOString(),
+        })
+        .eq("id", existing.data.id)
+        .select("id")
+        .single();
+      if (!upd.error) {
+        return NextResponse.json({ ok: true, id: existing.data.id, deduped: true }, { status: 200 });
+      }
+      // لو last_contact مش موجود في القاعدة نرجّع من غيره — المهم مايتكررش
+      const retry = await supabase
+        .from("leads")
+        .update({ customer_name, property_id: body.property_id || null })
+        .eq("id", existing.data.id)
+        .select("id")
+        .single();
+      if (!retry.error) {
+        return NextResponse.json({ ok: true, id: existing.data.id, deduped: true }, { status: 200 });
+      }
+      // فشل التحديث — نكمّل للمسار العادي بدل ما نضيع الليد
+    }
+
     let { data, error } = await supabase
       .from("leads")
       .insert(payload)
